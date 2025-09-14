@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import logo from "../assets/logo/logo.png";
+import logo from "../assets/logo.png";
 import { useAuth } from "../contexts/useAuth";
 import { isAxiosError } from "axios";
 
