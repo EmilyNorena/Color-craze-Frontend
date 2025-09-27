@@ -1,11 +1,16 @@
-import { AppRoutes } from "./routes";
+import { useState } from 'react'
+import CanvasBoard from './pages/CanvasBoard'
+
 
 function App() {
+  const [count, setCount] = useState(0)
+
   return (
-    <div className="app-container">
-      <AppRoutes />
-    </div>
-  );
+    <>
+
+      <CanvasBoard />
+    </>
+  )
 }
 
-export default App;
+export default App
