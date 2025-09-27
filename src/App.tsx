@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import CanvasBoard from './pages/CanvasBoard'
+import CanvasBoard from './components/CanvasBoard'
 
 
 function App() {
