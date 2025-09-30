@@ -1,6 +1,6 @@
 // CanvasBoard.tsx (versión refactorizada)
 import { useMemo } from 'react';
-import { generatePlatforms } from '../types/platformConfig';
+import { generatePlatforms } from '../contexts/platformConfig';
 import { usePaintableGrid } from '../hooks/usePaintableGrid';
 import CanvasRenderer from '../components/CanvasRenderer';
 import StatsPanel from '../components/StatsPanel'; // Componente separado para estadísticas

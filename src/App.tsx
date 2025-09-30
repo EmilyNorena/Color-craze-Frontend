@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import CanvasBoard from './components/CanvasBoard'
+import { Avatar } from './components/Avatar'
 
 
 function App() {
@@ -9,6 +10,7 @@ function App() {
     <>
 
       <CanvasBoard />
+      <Avatar />
     </>
   )
 }

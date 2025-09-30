@@ -67,7 +67,6 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
         border: '2px solid #333',
         background: 'transparent',
         borderRadius: '8px',
-        cursor: 'pointer'
       }}
     />
   );
