@@ -1,0 +1,1 @@
+export type avatar = "avatar1" | "avatar2" | "avatar3" | "avatar4";

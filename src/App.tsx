@@ -1,11 +1,18 @@
-import { AppRoutes } from "./routes";
+import { useState } from 'react'
+import CanvasBoard from './components/CanvasBoard'
+import { Avatar } from './components/Avatar'
+
 
 function App() {
+  const [count, setCount] = useState(0)
+
   return (
-    <div className="app-container">
-      <AppRoutes />
-    </div>
-  );
+    <>
+
+      <CanvasBoard />
+      <Avatar />
+    </>
+  )
 }
 
-export default App;
+export default App
