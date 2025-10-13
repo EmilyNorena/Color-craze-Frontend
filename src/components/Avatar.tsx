@@ -44,7 +44,7 @@ export const Avatar: React.FC<AvatarProps> = ({
     gameBoard = { width: 800, height: 600 } // ← tablero por default
 }) => {
     const randomIndex = Math.floor(Math.random() * avatars.length);
-    const [avatar, setAvatar] = useState<avatar>(avatars[randomIndex]);
+    const [avatar] = useState<avatar>(avatars[randomIndex]);
     const info = avatarInfo[avatar];
 
     // Hook movimiento

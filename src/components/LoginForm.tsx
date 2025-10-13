@@ -12,6 +12,7 @@ const Login: React.FC = () => {
 
   const navigate = useNavigate();
   const { login } = useAuth();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -19,29 +20,37 @@ const Login: React.FC = () => {
 
     try {
       await login(email, password);
-      navigate("/dashboard");
+
+      navigate("/board");
     } catch (err: unknown) {
       console.error("Error en login:", err);
 
       if (isAxiosError(err)) {
-        setError(err.response?.data?.message || "Credenciales incorrectas o error en el servidor. Inténtalo de nuevo.");
+        setError(
+          err.response?.data?.message ||
+            "Credenciales incorrectas o error en el servidor. Inténtalo de nuevo."
+        );
       } else if (err instanceof Error) {
         setError(err.message);
       } else {
-        setError("Credenciales incorrectas o error en el servidor. Inténtalo de nuevo.");
+        setError(
+          "Credenciales incorrectas o error en el servidor. Inténtalo de nuevo."
+        );
       }
     } finally {
       setIsLoading(false);
     }
-
   };
 
   return (
     <div className="login-card">
       <div className="text-center mb-6">
         <img src={logo} alt="Logo" className="block mx-auto w-auto h-[8rem]" />
-        <h2 className="text-[20px] font-bold mt-4">Inicio de Sesión</h2>
+        <h2 className="text-[20px] font-bold mt-4 text-white">
+          Inicio de Sesión
+        </h2>
       </div>
+
       <form onSubmit={handleSubmit}>
         <div className="mb-1 p-2">
           <label
