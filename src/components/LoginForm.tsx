@@ -11,7 +11,7 @@ const Login: React.FC = () => {
   const [error, setError] = useState("");
 
   const navigate = useNavigate();
-  const { login, guestLogin } = useAuth(); // 👈 incluimos guestLogin
+  const { login, guestLogin } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,7 +41,6 @@ const Login: React.FC = () => {
     }
   };
 
-  // 👇 nueva función
   const handleGuestLogin = async () => {
     setIsLoading(true);
     setError("");
@@ -60,7 +59,6 @@ const Login: React.FC = () => {
   return (
     <div className="login-card">
       <div className="text-center mb-6">
-        <img src={logo} alt="Logo" className="block mx-auto w-auto h-[8rem]" />
         <h2 className="text-[20px] font-bold mt-4 text-white">
           Inicio de Sesión
         </h2>
@@ -115,7 +113,6 @@ const Login: React.FC = () => {
           {isLoading ? "Cargando..." : "Iniciar Sesión"}
         </button>
 
-        {/* 👇 Botón invitado */}
         <button
           type="button"
           disabled={isLoading}
