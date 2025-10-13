@@ -11,7 +11,7 @@ const Login: React.FC = () => {
   const [error, setError] = useState("");
 
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, guestLogin } = useAuth(); // 👈 incluimos guestLogin
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,7 +20,6 @@ const Login: React.FC = () => {
 
     try {
       await login(email, password);
-
       navigate("/board");
     } catch (err: unknown) {
       console.error("Error en login:", err);
@@ -37,6 +36,22 @@ const Login: React.FC = () => {
           "Credenciales incorrectas o error en el servidor. Inténtalo de nuevo."
         );
       }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 👇 nueva función
+  const handleGuestLogin = async () => {
+    setIsLoading(true);
+    setError("");
+
+    try {
+      await guestLogin();
+      navigate("/board");
+    } catch (err) {
+      console.error("Error en login invitado:", err);
+      setError("No se pudo iniciar sesión como invitado. Inténtalo más tarde.");
     } finally {
       setIsLoading(false);
     }
@@ -98,6 +113,16 @@ const Login: React.FC = () => {
           className="bg-blue-950 text-lg w-full p-3 rounded-lg font-medium hover:bg-opacity-90 transition"
         >
           {isLoading ? "Cargando..." : "Iniciar Sesión"}
+        </button>
+
+        {/* 👇 Botón invitado */}
+        <button
+          type="button"
+          disabled={isLoading}
+          onClick={handleGuestLogin}
+          className="mt-3 bg-gray-700 text-lg w-full p-3 rounded-lg font-medium hover:bg-opacity-90 transition"
+        >
+          {isLoading ? "Cargando..." : "Entrar como invitado"}
         </button>
 
         <div className="mt-6 text-center">

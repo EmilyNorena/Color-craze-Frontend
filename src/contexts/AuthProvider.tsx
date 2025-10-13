@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { jwtDecode } from "jwt-decode";
 import { AuthContext } from "./AuthContext";
-import { login as loginService } from "../services/authService";
+import { login as loginService, guestLogin as guestLoginService } from "../services/authService";
 import type { UserData } from "../types/user";
 import type { JwtPayload } from "../types/jwtPayLoad";
 
@@ -13,6 +13,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (email: string, password: string) => {
     const response = await loginService(email, password);
+
     try {
       const decoded = jwtDecode<JwtPayload>(response.token);
       if (decoded.exp * 1000 < Date.now()) throw new Error("Token expirado");
@@ -28,10 +29,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       sessionStorage.setItem("user", JSON.stringify(response.userData));
     } catch (err) {
       console.error("Token inválido:", err);
-      setIsAuthenticated(false);
-      setRole(null);
-      setUser(null);
-      setToken(null);
+      logout();
+      throw err;
+    }
+  };
+
+  const guestLogin = async () => {
+    const response = await guestLoginService();
+
+    try {
+      const decoded = jwtDecode<JwtPayload>(response.token);
+      if (decoded.exp * 1000 < Date.now()) throw new Error("Token expirado");
+
+      setIsAuthenticated(true);
+      setRole(response.userData.role || "GUEST");
+      setUser(response.userData);
+      setToken(response.token);
+
+      sessionStorage.setItem("token", response.token);
+      sessionStorage.setItem("role", response.userData.role || "GUEST");
+      sessionStorage.setItem("user", JSON.stringify(response.userData));
+    } catch (err) {
+      console.error("Token de invitado inválido:", err);
+      logout();
       throw err;
     }
   };
@@ -49,7 +69,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, role, user, token, login, logout }}>
+    <AuthContext.Provider
+      value={{
+        isAuthenticated,
+        role,
+        user,
+        token,
+        login,
+        logout,
+        guestLogin,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
