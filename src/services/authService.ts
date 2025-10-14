@@ -27,3 +27,11 @@ export async function refreshToken(refreshToken: string): Promise<LoginResponse>
 
   return response.data;
 }
+
+export async function guestLogin(): Promise<LoginResponse> {
+  const API_AUTH_URL = "http://localhost:8080/api/auth";
+  const url = `${API_AUTH_URL}/guest`;
+
+  const response = await apiClient.post<LoginResponse>(url);
+  return response.data;
+}

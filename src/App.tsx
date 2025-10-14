@@ -1,18 +1,11 @@
-import { useState } from 'react'
-import CanvasBoard from './components/CanvasBoard'
-import { Avatar } from './components/Avatar'
-
+import { AppRoutes } from "./routes.tsx";
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-
-      <CanvasBoard />
-      <Avatar />
-    </>
-  )
+    <div className="app-container">
+      <AppRoutes />
+    </div>
+  );
 }
 
-export default App
+export default App;
