@@ -1,7 +1,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
-import { Login } from "./pages/LoginPage";
-import CanvasBoard from "./components/CanvasBoard";
-import { Avatar } from "./components/Avatar";
+import { Login} from "./pages/LoginPage";
+import { BoardPage } from "./pages/BoardPage";
+
 
 export const AppRoutes = () => {
   return (
@@ -12,7 +12,7 @@ export const AppRoutes = () => {
       
       {/* Rutas principales */}
       <Route path="/login" element={<Login />} />
-      <Route path="/board" element={<><CanvasBoard /><Avatar /></>} />
+      <Route path="/board" element={<>< BoardPage /></>} />
     </Routes>
   );
 };
