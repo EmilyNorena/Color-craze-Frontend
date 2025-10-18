@@ -1,21 +1,46 @@
 import { useEffect, useRef } from "react";
-import { WebSocketService } from "../api/websocket/WebSocketService";
-import type { PlayerMove } from "../api/websocket/types/playerMove";
+import { Client, type IMessage } from "@stomp/stompjs";
+import SockJS from "sockjs-client";
 
-export function useWebSocketGame(gameId: string, onMessage: (msg: any) => void) {
-const wsRef = useRef<WebSocketService | null>(null);
+export const useWebSocketGame = (gameId: string, onMessage: (msg: any) => void) => {
+const clientRef = useRef<Client | null>(null);
 
 useEffect(() => {
-    wsRef.current = new WebSocketService("http://localhost:8080", gameId);
-    wsRef.current.connect(onMessage);
+    const socket = new SockJS("http://localhost:8080/ws");
+    const client = new Client({
+    webSocketFactory: () => socket,
+    reconnectDelay: 5000,
+    });
+
+    client.onConnect = () => {
+    console.log("✅ Conectado a WebSocket");
+
+    client.subscribe(`/topic/board.${gameId}`, (message: IMessage) => {
+        onMessage(JSON.parse(message.body));
+    });
+
+    client.subscribe(`/user/queue/reply`, (message: IMessage) => {
+        onMessage(JSON.parse(message.body));
+    });
+    };
+
+    client.activate();
+    clientRef.current = client;
 
     return () => {
-    wsRef.current?.disconnect();
+    client.deactivate();
+    clientRef.current = null;
     };
-}, [gameId, onMessage]);
+}, [gameId]);
 
-const sendMove = (playerId: string, direction: PlayerMove) => {
-    wsRef.current?.sendMove(playerId, direction);
+const sendMove = (playerId: string, direction: string) => {
+    if (clientRef.current?.connected) {
+    clientRef.current.publish({
+        destination: `/app/move.${gameId}`,
+        body: JSON.stringify({ playerId, direction }),
+    });
+    }
 };
+
 return { sendMove };
-}
+};

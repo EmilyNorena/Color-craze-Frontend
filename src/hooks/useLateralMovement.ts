@@ -1,6 +1,6 @@
 // src/hooks/useLateralMovement.ts
-import { useState, useEffect, useRef } from 'react';
-import type { move } from '../types/move'; 
+import { useState, useEffect, useRef } from "react";
+import type { move } from "../types/move";
 
 interface MovementState {
   position: { x: number; y: number };
@@ -17,65 +17,69 @@ interface UseLateralMovementProps {
     top: number;
     bottom: number;
   };
-  onMove?: (direction: move) => void; 
+  onMove?: (direction: move) => void; // callback para enviar movimiento al backend
 }
 
 export const useLateralMovement = ({
   initialPosition = { x: 0, y: 0 },
   speed = 5,
   boundaries,
-  onMove
+  onMove,
 }: UseLateralMovementProps = {}) => {
-
   const [movement, setMovement] = useState<MovementState>({
     position: initialPosition,
     velocity: { x: 0, y: 0 },
-    isGrounded: true
+    isGrounded: true,
   });
 
-  const keys = useRef({
-    left: false,
-    right: false,
-  });
+  const keys = useRef({ left: false, right: false });
+  const lastDirection = useRef<move | null>(null);
 
+  // Manejo de teclas
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowLeft') keys.current.left = true;
-      if (e.key === 'ArrowRight') keys.current.right = true;
+      if (e.key === "ArrowLeft") keys.current.left = true;
+      if (e.key === "ArrowRight") keys.current.right = true;
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowLeft') keys.current.left = false;
-      if (e.key === 'ArrowRight') keys.current.right = false;
+      if (e.key === "ArrowLeft") keys.current.left = false;
+      if (e.key === "ArrowRight") keys.current.right = false;
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
 
     return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
     };
   }, []);
 
+  // Loop de movimiento
   useEffect(() => {
     const gameLoop = setInterval(() => {
-      setMovement(prev => {
+      setMovement((prev) => {
         let newVelocityX = 0;
-        let moveDirection: move | null = null;
+        let currentDirection: move | null = null;
 
-        if (keys.current.left) {
-          newVelocityX = -speed;
-          moveDirection = 'LEFT';
-        }
-        if (keys.current.right) {
-          newVelocityX = speed;
-          moveDirection = 'RIGHT';
+        if (keys.current.left) currentDirection = "LEFT";
+        if (keys.current.right) currentDirection = "RIGHT";
+
+        // Enviar movimiento al backend solo si cambia la dirección
+        if (currentDirection !== lastDirection.current && currentDirection && onMove) {
+          onMove(currentDirection);
+          lastDirection.current = currentDirection;
         }
 
-        if (moveDirection && onMove) {
-          onMove(moveDirection);
-        }
+        if (!currentDirection) lastDirection.current = null;
+
+        newVelocityX =
+          currentDirection === "LEFT"
+            ? -speed
+            : currentDirection === "RIGHT"
+            ? speed
+            : 0;
 
         let newX = prev.position.x + newVelocityX;
         let newY = prev.position.y;
@@ -101,6 +105,6 @@ export const useLateralMovement = ({
     velocity: movement.velocity,
     isGrounded: movement.isGrounded,
     setPosition: (pos: { x: number; y: number }) =>
-      setMovement(prev => ({ ...prev, position: pos })),
+      setMovement((prev) => ({ ...prev, position: pos })),
   };
 };
