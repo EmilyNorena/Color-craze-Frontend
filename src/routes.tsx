@@ -1,7 +1,8 @@
+// src/AppRoutes.tsx
 import { Routes, Route, Navigate } from "react-router-dom";
-import { Login} from "./pages/LoginPage";
+import { Login } from "./pages/LoginPage";
 import { BoardPage } from "./pages/BoardPage";
-
+import { ProtectedRoute } from "./components/ProtectedRoute";
 
 export const AppRoutes = () => {
   return (
@@ -9,10 +10,19 @@ export const AppRoutes = () => {
       {/* Redirecciones */}
       <Route path="*" element={<Navigate to="/login" />} />
       <Route path="/" element={<Navigate to="/login" />} />
-      
-      {/* Rutas principales */}
+
+      {/* Rutas públicas */}
       <Route path="/login" element={<Login />} />
-      <Route path="/board" element={<>< BoardPage /></>} />
+
+      {/* Rutas protegidas */}
+      <Route
+        path="/board"
+        element={
+          <ProtectedRoute>
+            <BoardPage />
+          </ProtectedRoute>
+        }
+      />
     </Routes>
   );
 };

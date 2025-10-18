@@ -15,7 +15,6 @@ constructor(baseUrl: string, gameId: string) {
     this.gameId = gameId;
     this.client = new Client({
     webSocketFactory: () => new SockJS(`${this.baseUrl}/color-craze/ws`),
-    reconnectDelay: 5000,
     debug: (str) => console.log(str),
     });
 }
