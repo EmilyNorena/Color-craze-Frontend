@@ -27,6 +27,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       sessionStorage.setItem("refreshToken", response.refreshToken);
       sessionStorage.setItem("role", response.userData.role);
       sessionStorage.setItem("user", JSON.stringify(response.userData));
+      sessionStorage.setItem("playerId", JSON.stringify(response.userData.id));
     } catch (err) {
       console.error("Token inválido:", err);
       logout();
