@@ -107,7 +107,9 @@ const Login: React.FC = () => {
         <button
           type="submit"
           disabled={isLoading}
-          className="bg-blue-950 text-lg w-full p-3 rounded-lg font-medium hover:bg-opacity-90 transition"
+          className="bg-gray-700 text-lg w-full p-3 rounded-lg font-medium 
+                     hover:bg-sky-500 transition-colors duration-300 
+                     disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isLoading ? "Cargando..." : "Iniciar Sesión"}
         </button>
@@ -116,7 +118,9 @@ const Login: React.FC = () => {
           type="button"
           disabled={isLoading}
           onClick={handleGuestLogin}
-          className="mt-3 bg-gray-700 text-lg w-full p-3 rounded-lg font-medium hover:bg-opacity-90 transition"
+          className="mt-3 bg-gray-700 text-lg w-full p-3 rounded-lg font-medium 
+                     hover:bg-sky-500 transition-colors duration-300 
+                     disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isLoading ? "Cargando..." : "Entrar como invitado"}
         </button>
@@ -126,7 +130,6 @@ const Login: React.FC = () => {
             to="/forgot-password"
             className="text-xs sm:text-base text-[#7aa6ff]"
           >
-            ¿Olvidaste tu contraseña?
           </Link>
         </div>
       </form>
