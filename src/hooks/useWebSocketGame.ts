@@ -6,7 +6,7 @@ export const useWebSocketGame = (gameId: string, onMessage: (msg: any) => void) 
 const clientRef = useRef<Client | null>(null);
 
 useEffect(() => {
-    const socket = new SockJS("http://localhost:8080/color-craze/ws");
+    const socket = new SockJS("http://localhost:8080/ws");
     const client = new Client({
     webSocketFactory: () => socket,
     reconnectDelay: 5000,

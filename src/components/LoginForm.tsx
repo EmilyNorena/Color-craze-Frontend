@@ -19,7 +19,7 @@ const Login: React.FC = () => {
 
     try {
       await login(email, password);
-      navigate("/board");
+      navigate("/rooms");
     } catch (err: unknown) {
       console.error("Error en login:", err);
 
@@ -46,7 +46,7 @@ const Login: React.FC = () => {
 
     try {
       await guestLogin();
-      navigate("/board");
+      navigate("/rooms");
     } catch (err) {
       console.error("Error en login invitado:", err);
       setError("No se pudo iniciar sesión como invitado. Inténtalo más tarde.");

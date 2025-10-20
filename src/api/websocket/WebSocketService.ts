@@ -1,48 +1,56 @@
-import { Client } from "@stomp/stompjs";
-import type { IMessage } from "@stomp/stompjs";
+import { Client, type IMessage } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
-import type { PlayerMove } from "./types/playerMove";
 
 export class WebSocketService {
 private client: Client;
 private connected = false;
-
 private baseUrl: string;
-private gameId: string;
 
-constructor(baseUrl: string, gameId: string) {
+constructor(baseUrl: string) {
     this.baseUrl = baseUrl;
-    this.gameId = gameId;
     this.client = new Client({
     webSocketFactory: () => new SockJS(`${this.baseUrl}/color-craze/ws`),
+    reconnectDelay: 5000,
     debug: (str) => console.log(str),
     });
 }
 
-connect(onMessage: (msg: any) => void) {
+connect(onConnect?: () => void, onError?: (e: any) => void) {
     this.client.onConnect = () => {
     this.connected = true;
     console.log("✅ Connected to WebSocket");
-
-    this.client.subscribe(`/topic/board.${this.gameId}`, (message: IMessage) => {
-        const body = JSON.parse(message.body);
-        onMessage(body);
-    });
+    if (onConnect) onConnect();
     };
 
     this.client.onStompError = (frame) => {
     console.error("❌ Broker error:", frame.headers["message"]);
     console.error(frame.body);
+    if (onError) onError(frame.body);
     };
 
     this.client.activate();
 }
 
-sendMove(playerId: string, direction: PlayerMove) {
-    if (!this.connected) return;
-    const payload = { playerId, direction };
+subscribe(topic: string, onMessage: (msg: any) => void) {
+    if (!this.connected) {
+    console.warn("⚠️ Not connected yet");
+    return;
+    }
+
+    this.client.subscribe(topic, (message: IMessage) => {
+    const body = JSON.parse(message.body);
+    onMessage(body);
+    });
+}
+
+send(destination: string, payload: any) {
+    if (!this.connected) {
+    console.warn("⚠️ Not connected yet");
+    return;
+    }
+
     this.client.publish({
-    destination: `/app/move.${this.gameId}`,
+    destination,
     body: JSON.stringify(payload),
     });
 }
