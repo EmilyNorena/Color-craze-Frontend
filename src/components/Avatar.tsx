@@ -26,7 +26,6 @@ export const Avatar: React.FC<AvatarProps> = ({
   const [avatar] = useState<avatar>("avatar1");
   const info = avatarInfo[avatar];
 
-  // Conectamos el WebSocket (aquí fijamos el gameId)
   const gameId = "color-craze-001";
   const { sendMove } = useWebSocketGame(gameId, (msg) => {
     console.log("📩 Mensaje recibido:", msg);
