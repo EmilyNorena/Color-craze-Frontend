@@ -13,12 +13,26 @@ export const AppRoutes = () => {
       <Route path="*" element={<Navigate to="/login" />} />
       <Route path="/" element={<Navigate to="/login" />} />
 
-      {/* Rutas públicas */}
+      {/* Ruta pública */}
       <Route path="/login" element={<Login />} />
-      <Route path="/rooms" element={<RoomPage />} />
-      <Route path="/waitingroom" element={<WaitingRoomPage />} />
 
       {/* Rutas protegidas */}
+      <Route
+        path="/rooms"
+        element={
+          <ProtectedRoute>
+            <RoomPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/waitingroom/:roomId?"
+        element={
+          <ProtectedRoute>
+            <WaitingRoomPage />
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/board"
         element={

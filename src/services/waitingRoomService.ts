@@ -1,19 +1,24 @@
-import axios from "axios";
+import apiClient from "./axiosService";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api/waiting-room";
+export interface WaitingRoomState {
+  roomId: string;
+  players: string[];
+  playerColors: Record<string, string>;
+  isFull: boolean;
+}
 
 export const waitingRoomService = {
-
-async createRoom(playerId: string) {
-    const response = await axios.post(`${API_BASE_URL}/create`, null, {
-    params: { playerId },
-    });
+  async createRoom(playerId: string): Promise<WaitingRoomState> {
+    const response = await apiClient.post<WaitingRoomState>(
+      `/api/waiting-room/create/${playerId}`
+    );
     return response.data;
-},
+  },
 
-
-async joinRoom(roomId: string, playerId: string) {
-    const response = await axios.post(`${API_BASE_URL}/join/${roomId}/${playerId}`);
+  async joinRoom(roomId: string, playerId: string): Promise<WaitingRoomState> {
+    const response = await apiClient.post<WaitingRoomState>(
+      `/api/waiting-room/join/${roomId}/${playerId}`
+    );
     return response.data;
-},
+  },
 };

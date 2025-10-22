@@ -9,7 +9,7 @@ private baseUrl: string;
 constructor(baseUrl: string) {
     this.baseUrl = baseUrl;
     this.client = new Client({
-    webSocketFactory: () => new SockJS(`${this.baseUrl}/color-craze/ws`),
+    webSocketFactory: () => new SockJS(`${this.baseUrl}/ws`),
     reconnectDelay: 5000,
     debug: (str) => console.log(str),
     });

@@ -1,7 +1,93 @@
-import React, { useState } from "react";
+// RoomPage.tsx - Con más debug
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { waitingRoomService } from "../services/waitingRoomService";
 
 export const RoomPage: React.FC = () => {
   const [joinCode, setJoinCode] = useState("");
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Debug inicial
+    console.log("🏠 RoomPage mounted - Auth check:", {
+      token: sessionStorage.getItem("token"),
+      user: sessionStorage.getItem("user"),
+      playerId: localStorage.getItem("playerId")
+    });
+  }, []);
+
+  const playerId = localStorage.getItem("playerId") || crypto.randomUUID();
+
+  const handleCreateRoom = async () => {
+    try {
+      console.log("🎯 Starting createRoom...");
+      setLoading(true);
+      
+      const token = sessionStorage.getItem("token");
+      console.log("🔐 Token being sent:", token);
+      
+      const state = await waitingRoomService.createRoom(playerId);
+      console.log("✅ Create room success:", state);
+      
+      navigate(`/waitingroom/${state.roomId}`);
+    } catch (error: any) {
+      console.error("❌ Create room error details:", {
+        message: error.message,
+        response: error.response,
+        status: error.response?.status,
+        data: error.response?.data
+      });
+      
+      if (error.response?.status === 401) {
+        alert("Tu sesión ha expirado. Serás redirigido al login.");
+        sessionStorage.clear();
+        window.location.href = "/login";
+      } else {
+        alert("No se pudo crear la sala. Inténtalo de nuevo.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleJoinRoom = async () => {
+    if (!joinCode.trim()) {
+      alert("Por favor ingresa un código de sala válido.");
+      return;
+    }
+
+    try {
+      console.log("🎯 Starting joinRoom...", { roomId: joinCode.trim() });
+      setLoading(true);
+      
+      const state = await waitingRoomService.joinRoom(joinCode.trim(), playerId);
+      console.log("✅ Join room success:", state);
+      
+      navigate(`/waitingroom/${state.roomId}`);
+    } catch (error: any) {
+      console.error("❌ Join room error details:", {
+        message: error.message,
+        response: error.response,
+        status: error.response?.status,
+        data: error.response?.data
+      });
+      
+      if (error.response?.status === 401) {
+        alert("Tu sesión ha expirado. Serás redirigido al login.");
+        sessionStorage.clear();
+        window.location.href = "/login";
+      } else if (error.response?.status === 404) {
+        alert("No se encontró la sala.");
+      } else if (error.response?.status === 400) {
+        alert("La sala está llena.");
+      } else {
+        alert("Error al unirse a la sala. Inténtalo de nuevo.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="relative flex flex-col items-center justify-center min-h-screen text-white overflow-hidden p-10">
@@ -13,9 +99,11 @@ export const RoomPage: React.FC = () => {
         <div className="mb-10">
           <h2 className="text-xl font-semibold mb-4">¿Quieres ser anfitrión?</h2>
           <button
-            className="w-full bg-gray-700 hover:bg-sky-500 transition-colors text-white py-4 rounded-2xl font-semibold text-lg shadow-md"
+            onClick={handleCreateRoom}
+            disabled={loading}
+            className="w-full bg-gray-700 hover:bg-sky-500 transition-colors text-white py-4 rounded-2xl font-semibold text-lg shadow-md disabled:opacity-50"
           >
-            🎮 Crear nueva partida
+            🎮 {loading ? "Creando..." : "Crear nueva partida"}
           </button>
         </div>
 
@@ -37,9 +125,11 @@ export const RoomPage: React.FC = () => {
         </div>
 
         <button
-          className="w-full bg-gray-700 hover:bg-sky-500 transition-colors text-white py-4 rounded-2xl font-semibold text-lg shadow-md"
+          onClick={handleJoinRoom}
+          disabled={loading}
+          className="w-full bg-gray-700 hover:bg-sky-500 transition-colors text-white py-4 rounded-2xl font-semibold text-lg shadow-md disabled:opacity-50"
         >
-          🚀 Unirse a la partida
+          🚀 {loading ? "Uniéndose..." : "Unirse a la partida"}
         </button>
       </div>
     </div>

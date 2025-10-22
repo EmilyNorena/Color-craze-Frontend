@@ -1,58 +1,87 @@
 import { useEffect, useRef } from "react";
 import SockJS from "sockjs-client";
-import { Client, type IMessage } from "@stomp/stompjs";
+import { Client, type IMessage, StompHeaders } from "@stomp/stompjs";
 
 export interface SelectColorMessage {
-playerId: string;
-color: string;
+  playerId: string;
+  color: string;
 }
 
 export const useWebSocketWaitingRoom = (
-roomId: string,
-onRoomUpdate: (state: any) => void,
-onColorError: (error: any) => void
+  roomId: string,
+  onRoomUpdate: (state: any) => void,
+  onColorError: (error: any) => void
 ) => {
-const clientRef = useRef<Client | null>(null);
+  const clientRef = useRef<Client | null>(null);
 
-useEffect(() => {
-    const socket = new SockJS("http://localhost:8080/color-craze/ws");
+  useEffect(() => {
+    const socket = new SockJS("http://localhost:8080/ws");
+
     const client = new Client({
-    webSocketFactory: () => socket,
-    reconnectDelay: 5000,
+      webSocketFactory: () => socket,
+      reconnectDelay: 5000, 
+      debug: (str) => console.log("[STOMP]", str),
     });
 
-    client.onConnect = () => {
-    console.log("✅ Conectado a WaitingRoom WebSocket");
+    const playerId =
+      localStorage.getItem("playerId") || crypto.randomUUID();
+    localStorage.setItem("playerId", playerId);
 
-    client.subscribe(`/topic/waiting-room/${roomId}`, (message: IMessage) => {
-        onRoomUpdate(JSON.parse(message.body));
-    });
+    client.onConnect = (frame) => {
+      console.log("✅ Conectado al WebSocket de WaitingRoom");
 
-    client.subscribe(`/user/queue/waiting-room/color-error`, (message: IMessage) => {
-        onColorError(JSON.parse(message.body));
-    });
+      // Suscripción al estado general de la sala
+      client.subscribe(`/topic/waiting-room/${roomId}`, (message: IMessage) => {
+        try {
+          const parsed = JSON.parse(message.body);
+          onRoomUpdate(parsed);
+        } catch (err) {
+          console.error("Error parseando mensaje de room:", err);
+        }
+      });
+
+      // Suscripción a errores específicos de usuario
+      client.subscribe(
+        `/user/queue/waiting-room/color-error`,
+        (message: IMessage) => {
+          try {
+            const parsed = JSON.parse(message.body);
+            onColorError(parsed);
+          } catch (err) {
+            console.error("Error parseando error de color:", err);
+          }
+        }
+      );
     };
 
+    // Conectar cliente
     client.activate();
     clientRef.current = client;
 
+    // Limpieza al desmontar
     return () => {
-    client.deactivate();
-    clientRef.current = null;
-    console.log("🔌 Desconectado de WaitingRoom WebSocket");
+      console.log("🔌 Desconectando de WaitingRoom WebSocket...");
+      client.deactivate();
+      clientRef.current = null;
     };
-}, [roomId]);
+  }, [roomId]);
 
-const selectColor = (message: SelectColorMessage) => {
-    if (clientRef.current?.connected) {
-    clientRef.current.publish({
+  /** Envía selección de color al backend */
+  const selectColor = (message: SelectColorMessage) => {
+    const client = clientRef.current;
+    if (client && client.connected) {
+      const headers: StompHeaders = {};
+      console.log("📤 Enviando color:", message);
+
+      client.publish({
         destination: `/app/waiting-room/${roomId}/select-color`,
         body: JSON.stringify(message),
-    });
+        headers,
+      });
     } else {
-    console.warn("⚠️ No conectado al WebSocket aún");
+      console.warn("⚠️ WebSocket no conectado aún, no se puede enviar color.");
     }
-};
+  };
 
-return { selectColor };
+  return { selectColor };
 };
