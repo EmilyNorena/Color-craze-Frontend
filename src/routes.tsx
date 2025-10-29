@@ -1,7 +1,10 @@
+// src/AppRoutes.tsx
 import { Routes, Route, Navigate } from "react-router-dom";
 import { Login } from "./pages/LoginPage";
-import CanvasBoard from "./components/CanvasBoard";
-import { Avatar } from "./components/Avatar";
+import { RoomPage } from "./pages/RoomPage"
+import { WaitingRoomPage } from "./pages/WaitingRoomPage"
+import { BoardPage } from "./pages/BoardPage";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 
 export const AppRoutes = () => {
   return (
@@ -9,10 +12,35 @@ export const AppRoutes = () => {
       {/* Redirecciones */}
       <Route path="*" element={<Navigate to="/login" />} />
       <Route path="/" element={<Navigate to="/login" />} />
-      
-      {/* Rutas principales */}
+
+      {/* Ruta pública */}
       <Route path="/login" element={<Login />} />
-      <Route path="/board" element={<><CanvasBoard /><Avatar /></>} />
+
+      {/* Rutas protegidas */}
+      <Route
+        path="/rooms"
+        element={
+          <ProtectedRoute>
+            <RoomPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/waitingroom/:roomId?"
+        element={
+          <ProtectedRoute>
+            <WaitingRoomPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/board"
+        element={
+          <ProtectedRoute>
+            <BoardPage />
+          </ProtectedRoute>
+        }
+      />
     </Routes>
   );
 };

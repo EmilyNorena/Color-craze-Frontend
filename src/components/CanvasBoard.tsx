@@ -1,51 +1,65 @@
-// CanvasBoard.tsx (versión refactorizada)
-import { useMemo } from 'react';
-import { generatePlatforms } from '../contexts/platformConfig';
-import { usePaintableGrid } from '../hooks/usePaintableGrid';
-import CanvasRenderer from '../components/CanvasRenderer';
-import StatsPanel from '../components/StatsPanel'; // Componente separado para estadísticas
+import { useMemo, useEffect, useCallback } from "react";
+import { generatePlatforms } from "../contexts/platformConfig";
+import { usePaintableGrid } from "../hooks/usePaintableGrid";
+import CanvasRenderer from "../components/CanvasRenderer";
 
 interface CanvasBoardProps {
   rows?: number;
   cols?: number;
   blockSize?: number;
+  onStatsChange?: (
+    stats: {
+      totalPaintable: number;
+      paintedCount: number;
+      remaining: number;
+    },
+    clearGrid: () => void
+  ) => void;
 }
 
-const CanvasBoard = ({ rows = 15, cols = 31, blockSize = 40 }: CanvasBoardProps) => {
-  const playerColors = useMemo(() => ["#ff4d4d", "#4d94ff", "#4dff4d", "#ffd24d"], []);
-  
-  const platforms = useMemo(() => 
-    generatePlatforms(rows, cols), [rows, cols]
+const CanvasBoard = ({
+  rows = 15,
+  cols = 31,
+  blockSize = 40,
+  onStatsChange,
+}: CanvasBoardProps) => {
+  const playerColors = useMemo(
+    () => ["#ff4d4d", "#4d94ff", "#4dff4d", "#ffd24d"],
+    []
   );
 
-  const {
-    paintedCells,
-    paintCell,
-    clearGrid,
-    getStats
-  } = usePaintableGrid(platforms, playerColors);
+  const platforms = useMemo(() => generatePlatforms(rows, cols), [rows, cols]);
 
-  const handleCellClick = (row: number, col: number) => {
-    if (platforms.some(p => p.row === row && p.col === col)) {
-      paintCell(row, col);
+  const { paintedCells, paintCell, clearGrid, getStats } = usePaintableGrid(
+    platforms,
+    playerColors
+  );
+
+  const handleCellClick = useCallback(
+    (row: number, col: number) => {
+      if (platforms.some((p) => p.row === row && p.col === col)) {
+        paintCell(row, col);
+      }
+    },
+    [paintCell, platforms]
+  );
+
+  useEffect(() => {
+    const stats = getStats();
+    if (onStatsChange) {
+      onStatsChange(stats, clearGrid);
     }
-  };
-
-  const stats = getStats();
+  }, [paintedCells, getStats, clearGrid, onStatsChange]);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "16px" }}>
-      <StatsPanel stats={stats} onClear={clearGrid} />
-      
-      <CanvasRenderer
-        platforms={platforms}
-        paintedCells={paintedCells}
-        blockSize={blockSize}
-        cols={cols}
-        rows={rows}
-        onCellClick={handleCellClick}
-      />
-    </div>
+    <CanvasRenderer
+      platforms={platforms}
+      paintedCells={paintedCells}
+      blockSize={blockSize}
+      cols={cols}
+      rows={rows}
+      onCellClick={handleCellClick}
+    />
   );
 };
 
