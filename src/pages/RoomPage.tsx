@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { waitingRoomService } from "../services/waitingRoomService";
+import type { AxiosError } from "axios"; // 👈 Importa el tipo de error de Axios
 
 export const RoomPage: React.FC = () => {
   const [joinCode, setJoinCode] = useState("");
@@ -11,7 +12,7 @@ export const RoomPage: React.FC = () => {
     console.log("🏠 RoomPage mounted - Auth check:", {
       token: sessionStorage.getItem("token"),
       user: sessionStorage.getItem("user"),
-      playerId: localStorage.getItem("playerId")
+      playerId: localStorage.getItem("playerId"),
     });
   }, []);
 
@@ -21,29 +22,29 @@ export const RoomPage: React.FC = () => {
     try {
       console.log("🎯 Starting createRoom...");
       setLoading(true);
-      
+
       const token = sessionStorage.getItem("token");
       console.log("🔐 Token being sent:", token);
-      
+
       const state = await waitingRoomService.createRoom(playerId);
       console.log("✅ Create room success:", state);
-      
-      // Guardar playerId en localStorage si es nuevo
+
       if (!localStorage.getItem("playerId")) {
         localStorage.setItem("playerId", playerId);
       }
-      
-      // Navegar pasando el estado completo como segundo parámetro
-      navigate(`/waitingroom/${state.roomId}`, { state: state });
-    } catch (error: any) {
+
+      navigate(`/waitingroom/${state.roomId}`, { state });
+    } catch (error: unknown) { // 👈 En lugar de `any`
+      const err = error as AxiosError<{ message?: string }>; // 👈 cast seguro
+
       console.error("❌ Create room error details:", {
-        message: error.message,
-        response: error.response,
-        status: error.response?.status,
-        data: error.response?.data
+        message: err.message,
+        response: err.response,
+        status: err.response?.status,
+        data: err.response?.data,
       });
-      
-      if (error.response?.status === 401) {
+
+      if (err.response?.status === 401) {
         alert("Tu sesión ha expirado. Serás redirigido al login.");
         sessionStorage.clear();
         window.location.href = "/login";
@@ -64,32 +65,32 @@ export const RoomPage: React.FC = () => {
     try {
       console.log("🎯 Starting joinRoom...", { roomId: joinCode.trim() });
       setLoading(true);
-      
+
       const state = await waitingRoomService.joinRoom(joinCode.trim(), playerId);
       console.log("✅ Join room success:", state);
-      
-      // Guardar playerId en localStorage si es nuevo
+
       if (!localStorage.getItem("playerId")) {
         localStorage.setItem("playerId", playerId);
       }
-      
-      // Navegar pasando el estado completo como segundo parámetro
-      navigate(`/waitingroom/${state.roomId}`, { state: state });
-    } catch (error: any) {
+
+      navigate(`/waitingroom/${state.roomId}`, { state });
+    } catch (error: unknown) { // 👈 En lugar de `any`
+      const err = error as AxiosError<{ message?: string }>;
+
       console.error("❌ Join room error details:", {
-        message: error.message,
-        response: error.response,
-        status: error.response?.status,
-        data: error.response?.data
+        message: err.message,
+        response: err.response,
+        status: err.response?.status,
+        data: err.response?.data,
       });
-      
-      if (error.response?.status === 401) {
+
+      if (err.response?.status === 401) {
         alert("Tu sesión ha expirado. Serás redirigido al login.");
         sessionStorage.clear();
         window.location.href = "/login";
-      } else if (error.response?.status === 404) {
+      } else if (err.response?.status === 404) {
         alert("No se encontró la sala.");
-      } else if (error.response?.status === 400) {
+      } else if (err.response?.status === 400) {
         alert("La sala está llena.");
       } else {
         alert("Error al unirse a la sala. Inténtalo de nuevo.");
