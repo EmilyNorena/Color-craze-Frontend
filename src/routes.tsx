@@ -34,7 +34,7 @@ export const AppRoutes = () => {
         }
       />
       <Route
-        path="/board"
+        path="/board/:roomId"
         element={
           <ProtectedRoute>
             <BoardPage />
