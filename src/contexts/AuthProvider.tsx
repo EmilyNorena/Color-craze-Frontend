@@ -13,7 +13,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [token, setToken] = useState<string | null>(null);
   const [, setLoading] = useState(true);
   
-  // Usar useRef para persistir entre re-renders
   const initialized = useRef(false);
 
   useEffect(() => {
