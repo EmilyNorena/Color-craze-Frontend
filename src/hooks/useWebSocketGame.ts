@@ -11,7 +11,7 @@ export const useWebSocketGame = (gameId: string, onMessage: (msg: any) => void) 
   useEffect(() => {
     console.log(`🔄 useWebSocketGame useEffect ejecutado para gameId: ${gameId}`);
     
-    const socket = new SockJS("http://localhost:8080/ws");
+    const socket = new SockJS("https://color-craze-backend-drggg9g2bsfqhkab.canadacentral-01.azurewebsites.net/ws");
     const client = new Client({
       webSocketFactory: () => socket,
       reconnectDelay: 5000,

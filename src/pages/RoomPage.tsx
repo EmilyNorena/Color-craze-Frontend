@@ -1,4 +1,3 @@
-// RoomPage.tsx - Con más debug
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { waitingRoomService } from "../services/waitingRoomService";
@@ -9,7 +8,6 @@ export const RoomPage: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Debug inicial
     console.log("🏠 RoomPage mounted - Auth check:", {
       token: sessionStorage.getItem("token"),
       user: sessionStorage.getItem("user"),

@@ -76,19 +76,16 @@ export const WaitingRoomPage: React.FC = () => {
       processRoomState(initialState);
     } else {
       console.log("❌ No se recibió estado inicial, mostrando loading...");
-      // Si no hay estado inicial, podrías hacer una llamada REST de respaldo
-      // o mantener el loading hasta que llegue por WebSocket
     }
   }, [location.state]);
 
-  // Conectar WebSocket para actualizaciones en tiempo real
   useEffect(() => {
     if (!roomId) return;
 
     console.log("🔌 Conectando WebSocket a sala:", roomId);
 
     const client = new Client({
-      webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
+      webSocketFactory: () => new SockJS('https://color-craze-backend-drggg9g2bsfqhkab.canadacentral-01.azurewebsites.net/ws'),
       reconnectDelay: 5000,
       onConnect: () => {
         console.log("✅ WebSocket conectado");
