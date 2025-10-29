@@ -1,17 +1,22 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
-import { Client } from "@stomp/stompjs";
-import SockJS from "sockjs-client";
 import avatarYellow from "../assets/avatar1.png";
 import avatarPink from "../assets/avatar2.png";
 import avatarPurple from "../assets/avatar3.png";
 import avatarGreen from "../assets/avatar4.png";
+import { useWebSocketWaitingRoom } from "../hooks/useWebSocketWaitingRoom";
 
 interface Player {
   id: string;
   name: string;
   avatar: string;
 }
+
+interface ColorError {
+  playerId: string;
+  color: string;
+}
+
 
 interface WaitingRoomState {
   roomId: string;
@@ -29,8 +34,6 @@ export const WaitingRoomPage: React.FC = () => {
   const [players, setPlayers] = useState<Player[]>([]);
   const [host, setHost] = useState<Player | null>(null);
   const [loading, setLoading] = useState(true);
-  const [stompClient, setStompClient] = useState<Client | null>(null);
-
   const avatarInfo: Record<string, { image: string; color: string }> = {
     YELLOW: { image: avatarYellow, color: "#fcaf01" },
     PINK: { image: avatarPink, color: "#fb038e" },
@@ -42,15 +45,10 @@ export const WaitingRoomPage: React.FC = () => {
   const processRoomState = (roomState: WaitingRoomState) => {
     console.log("🎮 Procesando estado de sala:", roomState);
 
-    if (!roomState.players || roomState.players.length === 0) {
-      console.error("❌ No hay jugadores en la sala");
-      return;
-    }
+    if (!roomState.players || roomState.players.length === 0) return;
 
-    // Actualizar timer con el valor del backend
     setTimer(roomState.seconds);
 
-    // El primer jugador es el anfitrión
     const hostPlayerId = roomState.players[0];
     const hostColor = roomState.playerColors[hostPlayerId];
 
@@ -83,74 +81,32 @@ export const WaitingRoomPage: React.FC = () => {
   // Usar el estado inicial pasado desde RoomPage
   useEffect(() => {
     const initialState = location.state as WaitingRoomState;
-
-    if (initialState) {
-      console.log("🎯 Estado inicial recibido:", initialState);
-      processRoomState(initialState);
-    } else {
-      console.log("❌ No se recibió estado inicial, mostrando loading...");
-    }
+    if (initialState) processRoomState(initialState);
   }, [location.state]);
 
   // Conexión WebSocket
-  useEffect(() => {
-    if (!roomId) return;
+  const { selectColor } = useWebSocketWaitingRoom<WaitingRoomState, ColorError>(
+  roomId!,
+  (state) => processRoomState(state),
+  (error) => alert(`No se pudo seleccionar el color ${error.color} para el jugador ${error.playerId}`)
+);
 
-    console.log("🔌 Conectando WebSocket a sala:", roomId);
 
-    const client = new Client({
-      webSocketFactory: () =>
-        new SockJS(
-          "http://localhost:8080/ws"
-        ),
-      reconnectDelay: 5000,
-      onConnect: () => {
-        console.log("✅ WebSocket conectado");
-
-        // Suscribirse a las actualizaciones de la sala
-        client.subscribe(`/topic/waiting-room/${roomId}`, (message) => {
-          try {
-            const roomState: WaitingRoomState = JSON.parse(message.body);
-            console.log("📨 Mensaje recibido del WebSocket:", roomState);
-            processRoomState(roomState);
-          } catch (error) {
-            console.error("❌ Error procesando mensaje WebSocket:", error);
-          }
-        });
-
-        console.log("📝 Suscrito a:", `/topic/waiting-room/${roomId}`);
-      },
-      onStompError: (frame) => {
-        console.error("❌ Error en WebSocket:", frame);
-      },
-      onDisconnect: () => {
-        console.log("🔌 WebSocket desconectado");
-      },
-    });
-
-    client.activate();
-    setStompClient(client);
-
-    return () => {
-      client.deactivate();
-    };
-  }, [roomId]);
+  const handleColorSelect = (color: string) => {
+    const playerId = localStorage.getItem("playerId")!;
+    selectColor({ playerId, color });
+  };
 
   // Navegar automáticamente cuando timer llegue a 0
   useEffect(() => {
-    if (timer === 0) {
-      console.log("⏰ Tiempo terminado, navegando al juego...");
-      navigate(`/board/${roomId}`);
-    }
+    if (timer === 0) navigate(`/board/${roomId}`);
   }, [timer, navigate, roomId]);
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen text-white">
         <div className="text-xl">
-          {stompClient?.connected
-            ? "Esperando jugadores..."
-            : "Conectando a la sala..."}
+          Esperando jugadores...
         </div>
       </div>
     );
@@ -195,8 +151,26 @@ export const WaitingRoomPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Selección de color */}
+      <div className="flex gap-4 mt-6 justify-center">
+        {Object.keys(avatarInfo).map((colorKey) => {
+          const isSelected =
+            host?.avatar === colorKey || players.some((p) => p.avatar === colorKey);
+          return (
+            <button
+              key={colorKey}
+              className={`w-12 h-12 rounded-full border-4 ${
+                isSelected ? "border-sky-400" : "border-white"
+              }`}
+              style={{ backgroundColor: avatarInfo[colorKey].color }}
+              onClick={() => handleColorSelect(colorKey)}
+            />
+          );
+        })}
+      </div>
+
       {/* Lista de jugadores */}
-      <div className="w-full max-w-3xl bg-gray-800 border-4 border-sky-500 rounded-3xl shadow-[0_10px_25px_rgba(0,0,0,0.4)] p-8">
+      <div className="w-full max-w-3xl bg-gray-800 border-4 border-sky-500 rounded-3xl shadow-[0_10px_25px_rgba(0,0,0,0.4)] p-8 mt-6">
         <h2 className="text-2xl font-semibold text-center mb-6 text-sky-400">
           Jugadores en la sala ({players.length + 1})
         </h2>
@@ -211,9 +185,7 @@ export const WaitingRoomPage: React.FC = () => {
                 className="w-14 h-14 rounded-full"
               />
             </div>
-            <span className="text-sm font-medium text-center text-sky-300">
-              {host.name}
-            </span>
+            <span className="text-sm font-medium text-center text-sky-300">{host.name}</span>
           </div>
 
           {/* Demás jugadores */}
