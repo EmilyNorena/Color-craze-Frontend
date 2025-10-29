@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useLocation } from "react-router-dom";
-import { Client } from '@stomp/stompjs';
-import SockJS from 'sockjs-client';
+import { Client } from "@stomp/stompjs";
+import SockJS from "sockjs-client";
+import avatarYellow from "../assets/avatar1.png";
+import avatarPink from "../assets/avatar2.png";
+import avatarPurple from "../assets/avatar3.png";
+import avatarGreen from "../assets/avatar4.png";
 
 interface Player {
   id: string;
@@ -26,10 +30,10 @@ export const WaitingRoomPage: React.FC = () => {
   const [stompClient, setStompClient] = useState<Client | null>(null);
 
   const avatarInfo: Record<string, { image: string; color: string }> = {
-    YELLOW: { image: "../src/assets/avatar1.png", color: "#fcaf01" },
-    PINK: { image: "../src/assets/avatar2.png", color: "#fb038e" },
-    PURPLE: { image: "../src/assets/avatar3.png", color: "#7304d7" },
-    GREEN: { image: "../src/assets/avatar4.png", color: "#77c914" },
+    YELLOW: { image: avatarYellow, color: "#fcaf01" },
+    PINK: { image: avatarPink, color: "#fb038e" },
+    PURPLE: { image: avatarPurple, color: "#7304d7" },
+    GREEN: { image: avatarGreen, color: "#77c914" },
   };
 
   // Función para procesar el estado de la sala
@@ -44,23 +48,31 @@ export const WaitingRoomPage: React.FC = () => {
     // El primer jugador es el anfitrión
     const hostPlayerId = roomState.players[0];
     const hostColor = roomState.playerColors[hostPlayerId];
-    
+
     // Crear objeto del host
     const hostData: Player = {
       id: hostPlayerId,
-      name: hostPlayerId === localStorage.getItem("playerId") ? "Tú (Anfitrión)" : "Anfitrión",
-      avatar: hostColor || "YELLOW"
+      name:
+        hostPlayerId === localStorage.getItem("playerId")
+          ? "Tú (Anfitrión)"
+          : "Anfitrión",
+      avatar: hostColor || "YELLOW",
     };
 
     // Crear array de jugadores (excluyendo al host)
-    const otherPlayers: Player[] = roomState.players.slice(1).map((playerId, index) => {
-      const playerColor = roomState.playerColors[playerId];
-      return {
-        id: playerId,
-        name: playerId === localStorage.getItem("playerId") ? "Tú" : `Jugador ${index + 2}`,
-        avatar: playerColor || "YELLOW"
-      };
-    });
+    const otherPlayers: Player[] = roomState.players
+      .slice(1)
+      .map((playerId, index) => {
+        const playerColor = roomState.playerColors[playerId];
+        return {
+          id: playerId,
+          name:
+            playerId === localStorage.getItem("playerId")
+              ? "Tú"
+              : `Jugador ${index + 2}`,
+          avatar: playerColor || "YELLOW",
+        };
+      });
 
     setHost(hostData);
     setPlayers(otherPlayers);
@@ -70,7 +82,7 @@ export const WaitingRoomPage: React.FC = () => {
   // Usar el estado inicial pasado desde RoomPage
   useEffect(() => {
     const initialState = location.state as WaitingRoomState;
-    
+
     if (initialState) {
       console.log("🎯 Estado inicial recibido:", initialState);
       processRoomState(initialState);
@@ -85,11 +97,14 @@ export const WaitingRoomPage: React.FC = () => {
     console.log("🔌 Conectando WebSocket a sala:", roomId);
 
     const client = new Client({
-      webSocketFactory: () => new SockJS('https://color-craze-backend-drggg9g2bsfqhkab.canadacentral-01.azurewebsites.net/ws'),
+      webSocketFactory: () =>
+        new SockJS(
+          "https://color-craze-backend-drggg9g2bsfqhkab.canadacentral-01.azurewebsites.net/ws"
+        ),
       reconnectDelay: 5000,
       onConnect: () => {
         console.log("✅ WebSocket conectado");
-        
+
         // Suscribirse a las actualizaciones de la sala
         client.subscribe(`/topic/waiting-room/${roomId}`, (message) => {
           try {
@@ -108,7 +123,7 @@ export const WaitingRoomPage: React.FC = () => {
       },
       onDisconnect: () => {
         console.log("🔌 WebSocket desconectado");
-      }
+      },
     });
 
     client.activate();
@@ -134,7 +149,9 @@ export const WaitingRoomPage: React.FC = () => {
     return (
       <div className="flex items-center justify-center min-h-screen text-white">
         <div className="text-xl">
-          {stompClient?.connected ? "Esperando jugadores..." : "Conectando a la sala..."}
+          {stompClient?.connected
+            ? "Esperando jugadores..."
+            : "Conectando a la sala..."}
         </div>
       </div>
     );
@@ -156,8 +173,8 @@ export const WaitingRoomPage: React.FC = () => {
           <h2 className="text-xl font-semibold text-sky-400">Anfitrión</h2>
           <div className="flex items-center gap-3 mt-2">
             <div className="relative w-12 h-12">
-              <img 
-                src={avatarInfo[host.avatar]?.image} 
+              <img
+                src={avatarInfo[host.avatar]?.image}
                 alt={host.name}
                 className="w-12 h-12 rounded-full"
               />
@@ -189,8 +206,8 @@ export const WaitingRoomPage: React.FC = () => {
           {/* Host primero */}
           <div className="flex flex-col items-center bg-gray-700/60 p-4 rounded-2xl w-28 h-32 border-2 border-sky-500">
             <div className="relative w-14 h-14 mb-3">
-              <img 
-                src={avatarInfo[host.avatar]?.image} 
+              <img
+                src={avatarInfo[host.avatar]?.image}
                 alt={host.name}
                 className="w-14 h-14 rounded-full"
               />
@@ -207,8 +224,8 @@ export const WaitingRoomPage: React.FC = () => {
               className="flex flex-col items-center bg-gray-700/60 p-4 rounded-2xl w-28 h-32 border border-gray-600 hover:border-sky-500 transition-all"
             >
               <div className="relative w-14 h-14 mb-3">
-                <img 
-                  src={avatarInfo[player.avatar]?.image} 
+                <img
+                  src={avatarInfo[player.avatar]?.image}
                   alt={player.name}
                   className="w-14 h-14 rounded-full"
                 />
