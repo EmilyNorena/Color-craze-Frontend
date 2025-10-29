@@ -7,59 +7,63 @@ private connected = false;
 private baseUrl: string;
 
 constructor(baseUrl: string) {
-    this.baseUrl = baseUrl;
-    this.client = new Client({
+this.baseUrl = baseUrl;
+this.client = new Client({
     webSocketFactory: () => new SockJS(`${this.baseUrl}/ws`),
     reconnectDelay: 5000,
     debug: (str) => console.log(str),
-    });
+});
 }
 
-connect(onConnect?: () => void, onError?: (e: any) => void) {
-    this.client.onConnect = () => {
+connect(onConnect?: () => void, onError?: (e: string) => void) {
+this.client.onConnect = () => {
     this.connected = true;
     console.log("✅ Connected to WebSocket");
-    if (onConnect) onConnect();
-    };
+    onConnect?.();
+};
 
-    this.client.onStompError = (frame) => {
+this.client.onStompError = (frame) => {
     console.error("❌ Broker error:", frame.headers["message"]);
     console.error(frame.body);
-    if (onError) onError(frame.body);
-    };
+    onError?.(frame.body);
+};
 
-    this.client.activate();
+this.client.activate();
 }
 
-subscribe(topic: string, onMessage: (msg: any) => void) {
-    if (!this.connected) {
+subscribe<T = unknown>(topic: string, onMessage: (msg: T) => void) {
+if (!this.connected) {
     console.warn("⚠️ Not connected yet");
     return;
-    }
+}
 
-    this.client.subscribe(topic, (message: IMessage) => {
-    const body = JSON.parse(message.body);
+this.client.subscribe(topic, (message: IMessage) => {
+    try {
+    const body: T = JSON.parse(message.body);
     onMessage(body);
-    });
+    } catch (error) {
+    console.error("❌ Failed to parse message body:", error);
+    }
+});
 }
 
-send(destination: string, payload: any) {
-    if (!this.connected) {
+send<T>(destination: string, payload: T) {
+if (!this.connected) {
     console.warn("⚠️ Not connected yet");
     return;
-    }
+}
 
-    this.client.publish({
+this.client.publish({
     destination,
     body: JSON.stringify(payload),
-    });
+});
 }
 
 disconnect() {
-    if (this.client.active) {
+if (this.client.active) {
     this.client.deactivate();
     this.connected = false;
     console.log("🔌 Disconnected from WebSocket");
-    }
+}
 }
 }

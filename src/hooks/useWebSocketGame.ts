@@ -2,15 +2,18 @@ import { useEffect, useRef, useCallback } from "react";
 import { Client, type IMessage } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
 
-export const useWebSocketGame = (gameId: string, onMessage: (msg: any) => void) => {
+export const useWebSocketGame = <T = unknown>(
+  gameId: string,
+  onMessage: (msg: T) => void
+) => {
   const clientRef = useRef<Client | null>(null);
-  
+
   // Usar useCallback para estabilizar la función onMessage
-  const stableOnMessage = useCallback(onMessage, []);
+  const stableOnMessage = useCallback(onMessage, [onMessage]);
 
   useEffect(() => {
     console.log(`🔄 useWebSocketGame useEffect ejecutado para gameId: ${gameId}`);
-    
+
     const socket = new SockJS("https://color-craze-backend-drggg9g2bsfqhkab.canadacentral-01.azurewebsites.net/ws");
     const client = new Client({
       webSocketFactory: () => socket,
@@ -20,13 +23,17 @@ export const useWebSocketGame = (gameId: string, onMessage: (msg: any) => void) 
     client.onConnect = () => {
       console.log("✅ Conectado a WebSocket - GameId:", gameId);
 
-      client.subscribe(`/topic/board.${gameId}`, (message: IMessage) => {
-        stableOnMessage(JSON.parse(message.body));
-      });
+      const handleMessage = (message: IMessage) => {
+        try {
+          const parsed = JSON.parse(message.body) as T;
+          stableOnMessage(parsed);
+        } catch (err) {
+          console.error("❌ Error parsing WebSocket message:", err);
+        }
+      };
 
-      client.subscribe(`/user/queue/reply`, (message: IMessage) => {
-        stableOnMessage(JSON.parse(message.body));
-      });
+      client.subscribe(`/topic/board.${gameId}`, handleMessage);
+      client.subscribe(`/user/queue/reply`, handleMessage);
     };
 
     client.activate();
