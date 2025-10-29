@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useLocation } from "react-router-dom";
+import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
 import avatarYellow from "../assets/avatar1.png";
@@ -18,9 +18,11 @@ interface WaitingRoomState {
   players: string[];
   playerColors: Record<string, string>;
   full: boolean;
+  seconds: number; // tiempo restante enviado por el backend
 }
 
 export const WaitingRoomPage: React.FC = () => {
+  const navigate = useNavigate();
   const { roomId } = useParams<{ roomId: string }>();
   const location = useLocation();
   const [timer, setTimer] = useState(30);
@@ -45,11 +47,13 @@ export const WaitingRoomPage: React.FC = () => {
       return;
     }
 
+    // Actualizar timer con el valor del backend
+    setTimer(roomState.seconds);
+
     // El primer jugador es el anfitrión
     const hostPlayerId = roomState.players[0];
     const hostColor = roomState.playerColors[hostPlayerId];
 
-    // Crear objeto del host
     const hostData: Player = {
       id: hostPlayerId,
       name:
@@ -59,20 +63,17 @@ export const WaitingRoomPage: React.FC = () => {
       avatar: hostColor || "YELLOW",
     };
 
-    // Crear array de jugadores (excluyendo al host)
-    const otherPlayers: Player[] = roomState.players
-      .slice(1)
-      .map((playerId, index) => {
-        const playerColor = roomState.playerColors[playerId];
-        return {
-          id: playerId,
-          name:
-            playerId === localStorage.getItem("playerId")
-              ? "Tú"
-              : `Jugador ${index + 2}`,
-          avatar: playerColor || "YELLOW",
-        };
-      });
+    const otherPlayers: Player[] = roomState.players.slice(1).map((playerId, index) => {
+      const playerColor = roomState.playerColors[playerId];
+      return {
+        id: playerId,
+        name:
+          playerId === localStorage.getItem("playerId")
+            ? "Tú"
+            : `Jugador ${index + 2}`,
+        avatar: playerColor || "YELLOW",
+      };
+    });
 
     setHost(hostData);
     setPlayers(otherPlayers);
@@ -91,6 +92,7 @@ export const WaitingRoomPage: React.FC = () => {
     }
   }, [location.state]);
 
+  // Conexión WebSocket
   useEffect(() => {
     if (!roomId) return;
 
@@ -99,7 +101,7 @@ export const WaitingRoomPage: React.FC = () => {
     const client = new Client({
       webSocketFactory: () =>
         new SockJS(
-          "https://color-craze-backend-drggg9g2bsfqhkab.canadacentral-01.azurewebsites.net/ws"
+          "http://localhost:8080/ws"
         ),
       reconnectDelay: 5000,
       onConnect: () => {
@@ -129,21 +131,18 @@ export const WaitingRoomPage: React.FC = () => {
     client.activate();
     setStompClient(client);
 
-    // Limpieza al desmontar el componente
     return () => {
-      if (client) {
-        client.deactivate();
-      }
+      client.deactivate();
     };
   }, [roomId]);
 
-  // Cuenta regresiva
+  // Navegar automáticamente cuando timer llegue a 0
   useEffect(() => {
-    const interval = setInterval(() => {
-      setTimer((t) => (t > 0 ? t - 1 : 0));
-    }, 1000);
-    return () => clearInterval(interval);
-  }, []);
+    if (timer === 0) {
+      console.log("⏰ Tiempo terminado, navegando al juego...");
+      navigate(`/board/${roomId}`);
+    }
+  }, [timer, navigate, roomId]);
 
   if (loading) {
     return (
@@ -167,7 +166,7 @@ export const WaitingRoomPage: React.FC = () => {
 
   return (
     <div className="relative flex flex-col items-center justify-center min-h-screen text-white overflow-hidden p-10">
-      {/* Header con información de la sala */}
+      {/* Header */}
       <div className="w-full max-w-4xl bg-gray-800 border-4 border-sky-500 rounded-3xl shadow-[0_10px_25px_rgba(0,0,0,0.4)] p-6 mb-10 flex flex-col md:flex-row items-center justify-between text-center md:text-left">
         <div className="flex flex-col items-center md:items-start">
           <h2 className="text-xl font-semibold text-sky-400">Anfitrión</h2>
@@ -203,7 +202,7 @@ export const WaitingRoomPage: React.FC = () => {
         </h2>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-8 justify-items-center">
-          {/* Host primero */}
+          {/* Host */}
           <div className="flex flex-col items-center bg-gray-700/60 p-4 rounded-2xl w-28 h-32 border-2 border-sky-500">
             <div className="relative w-14 h-14 mb-3">
               <img
@@ -230,9 +229,7 @@ export const WaitingRoomPage: React.FC = () => {
                   className="w-14 h-14 rounded-full"
                 />
               </div>
-              <span className="text-sm font-medium text-center">
-                {player.name}
-              </span>
+              <span className="text-sm font-medium text-center">{player.name}</span>
             </div>
           ))}
         </div>
