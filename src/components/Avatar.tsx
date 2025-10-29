@@ -1,5 +1,5 @@
 // src/components/Avatar.tsx
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { avatar } from "../types/avatar";
 import { useLateralMovement } from "../hooks/useLateralMovement";
 import { useWebSocketGame } from "../hooks/useWebSocketGame";

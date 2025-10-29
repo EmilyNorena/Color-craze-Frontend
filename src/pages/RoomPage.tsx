@@ -30,7 +30,13 @@ export const RoomPage: React.FC = () => {
       const state = await waitingRoomService.createRoom(playerId);
       console.log("✅ Create room success:", state);
       
-      navigate(`/waitingroom/${state.roomId}`);
+      // Guardar playerId en localStorage si es nuevo
+      if (!localStorage.getItem("playerId")) {
+        localStorage.setItem("playerId", playerId);
+      }
+      
+      // Navegar pasando el estado completo como segundo parámetro
+      navigate(`/waitingroom/${state.roomId}`, { state: state });
     } catch (error: any) {
       console.error("❌ Create room error details:", {
         message: error.message,
@@ -64,7 +70,13 @@ export const RoomPage: React.FC = () => {
       const state = await waitingRoomService.joinRoom(joinCode.trim(), playerId);
       console.log("✅ Join room success:", state);
       
-      navigate(`/waitingroom/${state.roomId}`);
+      // Guardar playerId en localStorage si es nuevo
+      if (!localStorage.getItem("playerId")) {
+        localStorage.setItem("playerId", playerId);
+      }
+      
+      // Navegar pasando el estado completo como segundo parámetro
+      navigate(`/waitingroom/${state.roomId}`, { state: state });
     } catch (error: any) {
       console.error("❌ Join room error details:", {
         message: error.message,
