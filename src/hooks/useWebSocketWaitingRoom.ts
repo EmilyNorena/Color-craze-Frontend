@@ -15,7 +15,8 @@ export const useWebSocketWaitingRoom = <T = unknown, E = unknown>(
   const clientRef = useRef<Client | null>(null);
 
   useEffect(() => {
-    const socket = new SockJS("https://color-craze-backend-drggg9g2bsfqhkab.canadacentral-01.azurewebsites.net/ws");
+    console.log("🔌 Conectando WebSocket WaitingRoom...");
+    const socket = new SockJS("http://localhost:8080/ws");
 
     const client = new Client({
       webSocketFactory: () => socket,
@@ -36,11 +37,11 @@ export const useWebSocketWaitingRoom = <T = unknown, E = unknown>(
           const parsed = JSON.parse(message.body) as T;
           onRoomUpdate(parsed);
         } catch (err) {
-          console.error("Error parseando mensaje de room:", err);
+          console.error("Error parseando mensaje de sala:", err);
         }
       });
 
-      // Suscripción a errores específicos de usuario
+      // Suscripción a errores específicos del usuario
       client.subscribe(`/user/queue/waiting-room/color-error`, (message: IMessage) => {
         try {
           const parsed = JSON.parse(message.body) as E;
@@ -59,7 +60,7 @@ export const useWebSocketWaitingRoom = <T = unknown, E = unknown>(
       client.deactivate();
       clientRef.current = null;
     };
-  }, [roomId, onRoomUpdate, onColorError]);
+  }, [roomId]);
 
   /** Envía selección de color al backend */
   const selectColor = (message: SelectColorMessage) => {
