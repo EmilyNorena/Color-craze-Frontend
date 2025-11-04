@@ -1,5 +1,5 @@
 export interface Player {
-  playerId: string;
+  id: string;
   row: number;
   col: number;
   color: string;

@@ -1,64 +1,42 @@
-import { useMemo, useEffect, useCallback } from "react";
-import { generatePlatforms } from "../contexts/platformConfig";
-import { usePaintableGrid } from "../hooks/usePaintableGrid";
+import React, { useEffect, useMemo } from "react";
 import CanvasRenderer from "../components/CanvasRenderer";
+import type { Player } from "../types/player";
 
 interface CanvasBoardProps {
+  grid: string[][]; // matriz del backend con los colores
+  players: Player[]; // jugadores con posiciones y color
   rows?: number;
   cols?: number;
   blockSize?: number;
-  onStatsChange?: (
-    stats: {
-      totalPaintable: number;
-      paintedCount: number;
-      remaining: number;
-    },
-    clearGrid: () => void
-  ) => void;
 }
 
-const CanvasBoard = ({
+const CanvasBoard: React.FC<CanvasBoardProps> = ({
+  grid,
+  players,
   rows = 15,
   cols = 31,
   blockSize = 40,
-  onStatsChange,
-}: CanvasBoardProps) => {
-  const playerColors = useMemo(
-    () => ["#ff4d4d", "#4d94ff", "#4dff4d", "#ffd24d"],
+}) => {
+  const colorMap = useMemo(
+    () => ({
+      PLATFORM: "#555", 
+      WHITE: "#e0e0e0",
+      RED: "#ff4d4d",
+      BLUE: "#4d94ff",
+      GREEN: "#4dff4d",
+      YELLOW: "#ffd24d",
+    }),
     []
   );
 
-  const platforms = useMemo(() => generatePlatforms(rows, cols), [rows, cols]);
-
-  const { paintedCells, paintCell, clearGrid, getStats } = usePaintableGrid(
-    platforms,
-    playerColors
-  );
-
-  const handleCellClick = useCallback(
-    (row: number, col: number) => {
-      if (platforms.some((p) => p.row === row && p.col === col)) {
-        paintCell(row, col);
-      }
-    },
-    [paintCell, platforms]
-  );
-
-  useEffect(() => {
-    const stats = getStats();
-    if (onStatsChange) {
-      onStatsChange(stats, clearGrid);
-    }
-  }, [paintedCells, getStats, clearGrid, onStatsChange]);
-
   return (
     <CanvasRenderer
-      platforms={platforms}
-      paintedCells={paintedCells}
+      grid={grid}
+      players={players}
+      colorMap={colorMap}
       blockSize={blockSize}
-      cols={cols}
       rows={rows}
-      onCellClick={handleCellClick}
+      cols={cols}
     />
   );
 };

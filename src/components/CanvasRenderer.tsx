@@ -1,117 +1,106 @@
-import { useEffect, useRef } from "react";
-import type { Position } from "../types/Position";
-
-interface Player {
-  id: string;
-  row: number;
-  col: number;
-  color: string;
-  avatar: string; // ruta al png
-}
+import React, { useEffect, useMemo, useRef } from "react";
+import avatarYellow from "../assets/avatar1.png";
+import avatarRed from "../assets/avatar2.png";
+import avatarPurple from "../assets/avatar3.png";
+import avatarGreen from "../assets/avatar4.png";
+import type { Player } from "../types/player";
 
 interface CanvasRendererProps {
-  platforms: Position[];
-  paintedCells: Record<string, string>;
+  grid: string[][];
   players: Player[];
+  colorMap: Record<string, string>;
   blockSize: number;
   cols: number;
   rows: number;
-  onCellClick: (row: number, col: number) => void;
 }
 
 const CanvasRenderer: React.FC<CanvasRendererProps> = ({
-  platforms,
-  paintedCells,
+  grid,
   players,
+  colorMap,
   blockSize,
   cols,
   rows,
-  onCellClick,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  // precargar avatares
+  const avatars = useMemo(() => ({
+    YELLOW: new Image(),
+    RED: new Image(),
+    PURPLE: new Image(),
+    GREEN: new Image(),
+  }), []);
+
+  useEffect(() => {
+    avatars.YELLOW.src = avatarYellow;
+    avatars.RED.src = avatarRed;
+    avatars.PURPLE.src = avatarPurple;
+    avatars.GREEN.src = avatarGreen;
+  }, [avatars]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-
-    // Pre-cargar imágenes de avatares
-    const avatarImages: Record<string, HTMLImageElement> = {};
-    players.forEach((player) => {
-      const img = new Image();
-      img.src = player.avatar;
-      avatarImages[player.id] = img;
-    });
 
     const drawBoard = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Fondo de tablero
-      ctx.fillStyle = "#1e1e1e";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      // Dibujar celdas del grid
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const colorKey = grid?.[r]?.[c] ?? "WHITE";
+          const color = colorMap[colorKey] || "#e0e0e0";
+          ctx.fillStyle = color;
+          ctx.fillRect(c * blockSize, r * blockSize, blockSize, blockSize);
 
-      // Dibujar plataformas base
-      platforms.forEach(({ row, col }) => {
-        const x = col * blockSize;
-        const y = row * blockSize;
-
-        const key = `${row},${col}`;
-        const paintedColor = paintedCells[key];
-
-        ctx.fillStyle = paintedColor || "#2b2b2b";
-        ctx.fillRect(x, y, blockSize, blockSize);
-
-        // Bordes
-        ctx.strokeStyle = "#444";
-        ctx.lineWidth = 1;
-        ctx.strokeRect(x, y, blockSize, blockSize);
-      });
-
-      // Dibujar jugadores (avatares)
-      players.forEach((player) => {
-        const x = player.col * blockSize + blockSize * 0.1;
-        const y = player.row * blockSize + blockSize * 0.1;
-        const size = blockSize * 0.8;
-
-        const img = avatarImages[player.id];
-        if (img.complete) {
-          ctx.drawImage(img, x, y, size, size);
-        } else {
-          img.onload = () => ctx.drawImage(img, x, y, size, size);
+          ctx.strokeStyle = "#ccc";
+          ctx.strokeRect(c * blockSize, r * blockSize, blockSize, blockSize);
         }
+      }
 
-        // Pequeño borde de color del jugador
-        ctx.strokeStyle = player.color;
-        ctx.lineWidth = 2;
-        ctx.strokeRect(x, y, size, size);
+      // Dibujar jugadores
+      players.forEach((player) => {
+        const img = avatars[player.color as keyof typeof avatars];
+        if (img && img.complete) {
+          ctx.drawImage(
+            img,
+            player.col * blockSize,
+            player.row * blockSize,
+            blockSize,
+            blockSize
+          );
+        } else {
+          // fallback por si no ha cargado la imagen
+          ctx.fillStyle = colorMap[player.color] || "black";
+          ctx.beginPath();
+          ctx.arc(
+            player.col * blockSize + blockSize / 2,
+            player.row * blockSize + blockSize / 2,
+            blockSize / 3,
+            0,
+            2 * Math.PI
+          );
+          ctx.fill();
+        }
       });
     };
 
     drawBoard();
-  }, [platforms, paintedCells, players, blockSize]);
-
-  const handleClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const rect = canvas.getBoundingClientRect();
-    const col = Math.floor((e.clientX - rect.left) / blockSize);
-    const row = Math.floor((e.clientY - rect.top) / blockSize);
-    onCellClick(row, col);
-  };
+  }, [grid, players, blockSize, rows, cols, colorMap, avatars]);
 
   return (
     <canvas
       ref={canvasRef}
       width={cols * blockSize}
       height={rows * blockSize}
-      onClick={handleClick}
       style={{
         border: "2px solid #333",
-        background: "#111",
-        borderRadius: "10px",
-        boxShadow: "0 0 10px rgba(0,0,0,0.5)",
-        cursor: "pointer",
+        borderRadius: "8px",
+        background: "transparent",
       }}
     />
   );
