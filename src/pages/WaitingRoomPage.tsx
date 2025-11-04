@@ -29,7 +29,7 @@ export const WaitingRoomPage: React.FC = () => {
   const navigate = useNavigate();
   const { roomId } = useParams<{ roomId: string }>();
   const location = useLocation();
-  const [timer, setTimer] = useState(5);
+  const [timer, setTimer] = useState(30);
   const [players, setPlayers] = useState<Player[]>([]);
   const [host, setHost] = useState<Player | null>(null);
   const [loading, setLoading] = useState(true);

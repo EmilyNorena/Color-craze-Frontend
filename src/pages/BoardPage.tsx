@@ -1,108 +1,117 @@
-import { useEffect, useState } from "react";
+import { useState, useCallback, useEffect } from "react";
+import { useParams } from "react-router-dom";
 import CanvasBoard from "../components/CanvasBoard";
-import type { Player } from "../types/player";
+import StatsPanel from "../components/StatsPanel";
+import { getBoardState } from "../services/boardService"; // 👈 import del nuevo servicio
 
 export const BoardPage = () => {
+  const { gameId } = useParams<{ gameId: string }>();
+  console.log("📡 Llamando al backend con gameId:", gameId);
+
   const [playerId, setPlayerId] = useState<string | null>(null);
+  const [boardData, setBoardData] = useState<any | null>(null);
+  const [stats, setStats] = useState<{
+    totalPaintable: number;
+    paintedCount: number;
+    remaining: number;
+  } | null>(null);
+  const [clearGridFn, setClearGridFn] = useState<(() => void) | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const [grid, setGrid] = useState<string[][]>([]);
-  const [players, setPlayers] = useState<Player[]>([]);
-  const rows = 15;
-  const cols = 31;
-
-  // ✅ Inicializar tablero y plataformas
-  useEffect(() => {
-    // base vacía
-    const newGrid = Array.from({ length: rows }, () =>
-      Array.from({ length: cols }, () => "EMPTY")
-    );
-
-    // generar plataformas aleatorias
-    const platformCount = 80;
-    for (let i = 0; i < platformCount; i++) {
-      const r = Math.floor(Math.random() * rows);
-      const c = Math.floor(Math.random() * cols);
-      newGrid[r][c] = "PLATFORM"; // gris oscuro base
-    }
-
-    // jugadores iniciales
-    const initialPlayers: Player[] = [
-      { id: "1", row: 3, col: 5, color: "YELLOW" },
-      { id: "2", row: 6, col: 10, color: "RED" },
-      { id: "3", row: 8, col: 7, color: "PURPLE" },
-      { id: "4", row: 10, col: 15, color: "GREEN" },
-    ];
-
-    setGrid(newGrid);
-    setPlayers(initialPlayers);
-
-    // función para actualizar pintura alrededor del jugador
-    const paintAdjacent = (r: number, c: number, color: string) => {
-      const directions = [
-        [-1, 0],
-        [1, 0],
-        [0, -1],
-        [0, 1],
-      ];
-      directions.forEach(([dr, dc]) => {
-        const rr = r + dr;
-        const cc = c + dc;
-        if (rr >= 0 && rr < rows && cc >= 0 && cc < cols) {
-          if (newGrid[rr][cc] === "PLATFORM" || newGrid[rr][cc].startsWith("PLATFORM_")) {
-            newGrid[rr][cc] = `PLATFORM_${color}`;
-          }
-        }
-      });
-    };
-
-    // simular movimiento y pintura
-    const interval = setInterval(() => {
-      setPlayers((prev) =>
-        prev.map((p) => {
-          const dir = Math.floor(Math.random() * 4);
-          let newRow = p.row;
-          let newCol = p.col;
-          if (dir === 0 && newRow > 0) newRow--; // arriba
-          if (dir === 1 && newRow < rows - 1) newRow++; // abajo
-          if (dir === 2 && newCol > 0) newCol--; // izquierda
-          if (dir === 3 && newCol < cols - 1) newCol++; // derecha
-
-          // pintar plataformas cercanas
-          paintAdjacent(newRow, newCol, p.color);
-          return { ...p, row: newRow, col: newCol };
-        })
-      );
-
-      setGrid([...newGrid]);
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  // obtener ID del jugador del sessionStorage
+  // Obtener ID del jugador almacenado localmente
   useEffect(() => {
     const storedUser = sessionStorage.getItem("user");
     if (storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser);
-        if (parsedUser?.id) setPlayerId(parsedUser.id);
-      } catch (err) {
-        console.error("Error al parsear usuario:", err);
+        if (parsedUser?.id) {
+          setPlayerId(parsedUser.id);
+        }
+      } catch (error) {
+        console.error("Error al parsear el usuario en sessionStorage:", error);
       }
     }
   }, []);
 
+  // 🔹 Consulta inicial del estado del tablero al backend
+  useEffect(() => {
+    const fetchBoard = async () => {
+      if (!gameId) return;
+      try {
+        setLoading(true);
+        const data = await getBoardState(gameId); // 👈 usamos el service
+        setBoardData(data);
+      } catch (error) {
+        console.error("Error cargando el estado del tablero:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBoard();
+  }, [gameId]);
+
+  // 🔹 Callback de estadísticas (desde CanvasBoard)
+  const handleStatsChange = useCallback(
+    (
+      updatedStats: {
+        totalPaintable: number;
+        paintedCount: number;
+        remaining: number;
+      },
+      clearGrid: () => void
+    ) => {
+      setStats(updatedStats);
+      setClearGridFn(() => clearGrid);
+    },
+    []
+  );
+
+  if (!playerId) {
+    return (
+      <div className="flex items-center justify-center min-h-screen text-white">
+        <p>No se encontró el usuario. Inicia sesión nuevamente.</p>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen text-white">
+        <p>Cargando tablero...</p>
+      </div>
+    );
+  }
+
+  if (!boardData) {
+    return (
+      <div className="flex items-center justify-center min-h-screen text-white">
+        <p>Error al cargar el tablero o no existe.</p>
+      </div>
+    );
+  }
+
+  const { grid, players } = boardData;
+
+  // ✅ Render principal
   return (
     <div className="relative flex flex-col items-center justify-center min-h-screen text-white overflow-hidden p-8">
-      {!playerId ? (
-        <div className="flex items-center justify-center min-h-screen text-white">
-          <p>No se encontró el usuario. Inicia sesión nuevamente.</p>
-        </div>
-      ) : (
-        <div className="relative bg-gray-800 border-4 border-sky-500 rounded-3xl shadow-[0_10px_30px_rgba(0,0,0,0.4)] p-6 flex items-center justify-center">
-          <CanvasBoard grid={grid} players={players} rows={rows} cols={cols} blockSize={40} />
+      {stats && (
+        <div className="mb-6 w-full max-w-3xl">
+          <StatsPanel stats={stats} onClear={clearGridFn || (() => {})} />
         </div>
       )}
+
+      <div className="relative bg-gray-800 border-4 border-sky-500 rounded-3xl shadow-[0_10px_30px_rgba(0,0,0,0.4)] p-6 flex items-center justify-center">
+        <CanvasBoard
+          rows={15}
+          cols={31}
+          blockSize={40}
+          onStatsChange={handleStatsChange}
+          initialGrid={grid}
+          players={Object.values(players)} // Pasamos lista de jugadores
+        />
+      </div>
     </div>
   );
 };
