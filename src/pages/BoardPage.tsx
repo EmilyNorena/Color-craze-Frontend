@@ -38,6 +38,7 @@ export const BoardPage = () => {
     const fetchBoard = async () => {
       if (!gameId) return;
       try {
+        await new Promise((resolve) => setTimeout(resolve, 5000)); //Aqui se puede poner una pantalla de carga o algo parecido
         setLoading(true);
         const data = await getBoardState(gameId); // 👈 usamos el service
         setBoardData(data);
