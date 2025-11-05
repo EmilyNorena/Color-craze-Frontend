@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import avatarYellow from "../assets/avatar1.png";
-import avatarPink from "../assets/avatar2.png";
+import avatarRed from "../assets/avatar2.png";
 import avatarPurple from "../assets/avatar3.png";
 import avatarGreen from "../assets/avatar4.png";
 import { useWebSocketWaitingRoom } from "../hooks/useWebSocketWaitingRoom";
@@ -36,7 +36,7 @@ export const WaitingRoomPage: React.FC = () => {
 
   const avatarInfo: Record<string, { image: string; color: string }> = {
     YELLOW: { image: avatarYellow, color: "#fcaf01" },
-    PINK: { image: avatarPink, color: "#fb038e" },
+    RED: { image: avatarRed, color: "#fb038e" },
     PURPLE: { image: avatarPurple, color: "#7304d7" },
     GREEN: { image: avatarGreen, color: "#77c914" },
   };
@@ -54,7 +54,7 @@ export const WaitingRoomPage: React.FC = () => {
     const hostData: Player = {
       id: hostPlayerId,
       name:
-        hostPlayerId === localStorage.getItem("playerId")
+        hostPlayerId === sessionStorage.getItem("correlationId")
           ? "Tú (Anfitrión)"
           : "Anfitrión",
       avatar: hostColor || "YELLOW",
@@ -65,7 +65,7 @@ export const WaitingRoomPage: React.FC = () => {
       return {
         id: playerId,
         name:
-          playerId === localStorage.getItem("playerId")
+          playerId === sessionStorage.getItem("correlationId")
             ? "Tú"
             : `Jugador ${index + 2}`,
         avatar: playerColor || "YELLOW",
@@ -96,7 +96,7 @@ export const WaitingRoomPage: React.FC = () => {
   );
 
   const handleColorSelect = (color: string) => {
-    const playerId = localStorage.getItem("playerId")!;
+    const playerId = sessionStorage.getItem("correlationId")!;
     selectColor({ playerId, color });
   };
 

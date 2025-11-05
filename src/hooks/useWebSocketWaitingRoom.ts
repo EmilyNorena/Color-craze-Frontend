@@ -24,10 +24,6 @@ export const useWebSocketWaitingRoom = <T = unknown, E = unknown>(
       debug: (str) => console.log("[STOMP]", str),
     });
 
-    const playerId =
-      localStorage.getItem("playerId") || crypto.randomUUID();
-    localStorage.setItem("playerId", playerId);
-
     client.onConnect = () => {
       console.log("✅ Conectado al WebSocket de WaitingRoom");
 

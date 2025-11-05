@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { waitingRoomService } from "../services/waitingRoomService";
-import type { AxiosError } from "axios"; // 👈 Importa el tipo de error de Axios
+import type { AxiosError } from "axios";
 
 export const RoomPage: React.FC = () => {
   const [joinCode, setJoinCode] = useState("");
@@ -9,43 +9,31 @@ export const RoomPage: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    console.log("🏠 RoomPage mounted - Auth check:", {
+    console.log("RoomPage mounted - Auth check:", {
       token: sessionStorage.getItem("token"),
       user: sessionStorage.getItem("user"),
-      playerId: localStorage.getItem("playerId"),
+      correlationId: sessionStorage.getItem("correlationId"),
     });
   }, []);
 
-  const playerId = localStorage.getItem("playerId") || crypto.randomUUID();
+  const getPlayerId = (): string => {
+    let correlationId = sessionStorage.getItem("correlationId");
+    if (!correlationId) {
+      correlationId = crypto.randomUUID();
+      sessionStorage.setItem("correlationId", correlationId);
+    }
+    return correlationId;
+  };
 
   const handleCreateRoom = async () => {
+    const playerId = getPlayerId();
     try {
-      console.log("🎯 Starting createRoom...");
       setLoading(true);
-
-      const token = sessionStorage.getItem("token");
-      console.log("🔐 Token being sent:", token);
-
       const state = await waitingRoomService.createRoom(playerId);
-      console.log("✅ Create room success:", state);
-
-      if (!localStorage.getItem("playerId")) {
-        localStorage.setItem("playerId", playerId);
-      }
-
       navigate(`/waitingroom/${state.roomId}`, { state });
-    } catch (error: unknown) { // 👈 En lugar de `any`
-      const err = error as AxiosError<{ message?: string }>; // 👈 cast seguro
-
-      console.error("❌ Create room error details:", {
-        message: err.message,
-        response: err.response,
-        status: err.response?.status,
-        data: err.response?.data,
-      });
-
+    } catch (error: unknown) {
+      const err = error as AxiosError<{ message?: string }>;
       if (err.response?.status === 401) {
-        alert("Tu sesión ha expirado. Serás redirigido al login.");
         sessionStorage.clear();
         window.location.href = "/login";
       } else {
@@ -62,30 +50,14 @@ export const RoomPage: React.FC = () => {
       return;
     }
 
+    const playerId = getPlayerId();
     try {
-      console.log("🎯 Starting joinRoom...", { roomId: joinCode.trim() });
       setLoading(true);
-
       const state = await waitingRoomService.joinRoom(joinCode.trim(), playerId);
-      console.log("✅ Join room success:", state);
-
-      if (!localStorage.getItem("playerId")) {
-        localStorage.setItem("playerId", playerId);
-      }
-
       navigate(`/waitingroom/${state.roomId}`, { state });
-    } catch (error: unknown) { // 👈 En lugar de `any`
+    } catch (error: unknown) {
       const err = error as AxiosError<{ message?: string }>;
-
-      console.error("❌ Join room error details:", {
-        message: err.message,
-        response: err.response,
-        status: err.response?.status,
-        data: err.response?.data,
-      });
-
       if (err.response?.status === 401) {
-        alert("Tu sesión ha expirado. Serás redirigido al login.");
         sessionStorage.clear();
         window.location.href = "/login";
       } else if (err.response?.status === 404) {
@@ -103,9 +75,7 @@ export const RoomPage: React.FC = () => {
   return (
     <div className="relative flex flex-col items-center justify-center min-h-screen text-white overflow-hidden p-10">
       <div className="relative bg-gray-800 border-4 border-sky-500 rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] p-12 w-full max-w-lg text-center">
-        <h1 className="text-4xl font-bold mb-10 text-sky-400">
-          Sala de Partidas
-        </h1>
+        <h1 className="text-4xl font-bold mb-10 text-sky-400">Sala de Partidas</h1>
 
         <div className="mb-10">
           <h2 className="text-xl font-semibold mb-4">¿Quieres ser anfitrión?</h2>
@@ -114,7 +84,7 @@ export const RoomPage: React.FC = () => {
             disabled={loading}
             className="w-full bg-gray-700 hover:bg-sky-500 transition-colors text-white py-4 rounded-2xl font-semibold text-lg shadow-md disabled:opacity-50"
           >
-            🎮 {loading ? "Creando..." : "Crear nueva partida"}
+            {loading ? "Creando..." : "Crear nueva partida"}
           </button>
         </div>
 
@@ -140,7 +110,7 @@ export const RoomPage: React.FC = () => {
           disabled={loading}
           className="w-full bg-gray-700 hover:bg-sky-500 transition-colors text-white py-4 rounded-2xl font-semibold text-lg shadow-md disabled:opacity-50"
         >
-          🚀 {loading ? "Uniéndose..." : "Unirse a la partida"}
+          {loading ? "Uniéndose..." : "Unirse a la partida"}
         </button>
       </div>
     </div>
