@@ -1,28 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import SockJS from "sockjs-client";
 import { Client, type IMessage, StompHeaders } from "@stomp/stompjs";
-
-interface PlatformUpdate {
-  row: number;
-  col: number;
-  color: string;
-}
-
-interface PlayerUpdate {
-  playerId: string;
-  newRow: number;
-  newCol: number;
-  alive: boolean;
-}
-
-interface MoveResult {
-  playerId: string;
-  newRow: number;
-  newCol: number;
-  platforms: PlatformUpdate[];
-  affectedPlayers: PlayerUpdate[];
-  success: boolean;
-}
+import type { MoveResult } from "../types/moveResult";
 
 interface PlayerMoveMessage {
   playerId: string;

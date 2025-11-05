@@ -86,7 +86,6 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
         }
       }
 
-      // Dibujar jugadores (encima de las celdas)
       players.forEach((player) => {
         const img = avatars[player.color as keyof typeof avatars];
         if (img && img.complete) {
@@ -98,7 +97,6 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
             blockSize
           );
         } else {
-          // fallback
           ctx.fillStyle = colorMap[player.color] || "black";
           ctx.beginPath();
           ctx.arc(

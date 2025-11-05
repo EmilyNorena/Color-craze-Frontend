@@ -4,12 +4,13 @@ import CanvasBoard from "../components/CanvasBoard";
 import StatsPanel from "../components/StatsPanel";
 import { getBoardState } from "../services/boardService"; 
 import { useWebSocketGame } from "../hooks/useWebSocketGame";
+import type { MoveResult } from "../types/moveResult";
 
 export const BoardPage = () => {
   const { gameId } = useParams<{ gameId: string }>();
   console.log("📡 Llamando al backend con gameId:", gameId);
 
-  const [playerId, setPlayerId] = useState<string | null>(
+  const [playerId] = useState<string | null>(
     sessionStorage.getItem("correlationId")
   );
   const [boardData, setBoardData] = useState<any | null>(null);
@@ -17,6 +18,10 @@ export const BoardPage = () => {
   const [clearGridFn, setClearGridFn] = useState<(() => void) | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Estado para el último MoveResult
+  const [lastMoveResult, setLastMoveResult] = useState<MoveResult | null>(null);
+
+  // Obtener estado inicial del tablero
   useEffect(() => {
     const fetchBoard = async () => {
       if (!gameId) return;
@@ -42,8 +47,17 @@ export const BoardPage = () => {
     []
   );
 
-  const { connected, sendMove } = useWebSocketGame(gameId!, playerId!);
+  // Conectarse al WebSocket
+  const { connected, sendMove, moveResults } = useWebSocketGame(gameId!, playerId!);
 
+  // Actualizar el último MoveResult cuando llegue uno nuevo
+  useEffect(() => {
+    if (moveResults.length > 0) {
+      setLastMoveResult(moveResults[moveResults.length - 1]);
+    }
+  }, [moveResults]);
+
+  // Manejar input del teclado
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!connected) return;
@@ -91,7 +105,8 @@ export const BoardPage = () => {
           blockSize={40}
           onStatsChange={handleStatsChange}
           initialGrid={grid}
-          players={Object.values(players)}
+          initialPlayers={Object.values(players)}
+          moveResult={lastMoveResult ?? undefined}// <-- PASAMOS EL ÚLTIMO MOVE RESULT
         />
       </div>
     </div>
