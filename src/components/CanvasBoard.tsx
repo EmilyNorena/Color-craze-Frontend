@@ -78,13 +78,19 @@ const CanvasBoard: React.FC<CanvasBoardProps> = ({
 
     setPlayers((prevPlayers) =>
       prevPlayers.map((p) => {
-        const affected = moveResult.affectedPlayers.find((ap: PlayerUpdate) => ap.playerId === p.id);
-        if (affected) {
-          return { ...p, color: affected.color, row: moveResult.newRow, col: moveResult.newCol };
+        if (p.id === moveResult.playerId) {
+          const affected = moveResult.affectedPlayers.find((ap) => ap.playerId === p.id);
+          return {
+            ...p,
+            row: moveResult.newRow,
+            col: moveResult.newCol,
+            color: affected ? affected.color : p.color,
+          };
         }
         return p;
       })
     );
+
   }, [moveResult]);
 
   return (
