@@ -3,8 +3,8 @@ import CanvasRenderer from "../components/CanvasRenderer";
 import type { Player } from "../types/player";
 
 interface CanvasBoardProps {
-  initialGrid?: any[][]; // matriz del backend con los colores o Box
-  players?: Player[]; // jugadores con posiciones y color
+  initialGrid?: any[][];
+  players?: Player[];
   rows?: number;
   cols?: number;
   blockSize?: number;
@@ -22,22 +22,14 @@ const CanvasBoard: React.FC<CanvasBoardProps> = ({
   blockSize = 40,
   onStatsChange,
 }) => {
-  const [grid, setGrid] = useState<string[][]>(() => {
-    if (initialGrid.length > 0) {
-      return initialGrid.map((row) =>
-        row.map((cell: any) =>
-          typeof cell === "string"
-            ? cell
-            : cell.color || "WHITE" // si es objeto Box, tomamos cell.color
-        )
-      );
-    }
+  // Mantener objetos con { type, color }
+  const [grid, setGrid] = useState(() => {
+    if (initialGrid.length > 0) return initialGrid;
     return Array.from({ length: rows }, () =>
-      Array(cols).fill("WHITE")
+      Array.from({ length: cols }, () => ({ type: "Box", color: "WHITE" }))
     );
   });
 
-  // 🔹 Mapa de colores que usarán el renderer y el canvas
   const colorMap = useMemo(
     () => ({
       PLATFORM: "#555555",
@@ -50,15 +42,16 @@ const CanvasBoard: React.FC<CanvasBoardProps> = ({
     []
   );
 
-  // 🔹 Simulación de stats o de clearGrid
   useEffect(() => {
     if (onStatsChange) {
       const total = rows * cols;
-      const painted = grid.flat().filter((c) => c !== "WHITE").length;
+      const painted = grid.flat().filter((c: any) => c.color !== "WHITE").length;
       const remaining = total - painted;
 
       const clearGrid = () => {
-        setGrid(Array.from({ length: rows }, () => Array(cols).fill("WHITE")));
+        setGrid(Array.from({ length: rows }, () =>
+          Array.from({ length: cols }, () => ({ type: "Box", color: "WHITE" }))
+        ));
       };
 
       onStatsChange({ totalPaintable: total, paintedCount: painted, remaining }, clearGrid);

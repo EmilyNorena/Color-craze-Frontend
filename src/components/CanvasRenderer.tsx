@@ -5,8 +5,13 @@ import avatarPurple from "../assets/avatar3.png";
 import avatarGreen from "../assets/avatar4.png";
 import type { Player } from "../types/player";
 
+interface BoxCell {
+  type: "BOX" | "PLATFORM" | "PLAYER";
+  color: string;
+}
+
 interface CanvasRendererProps {
-  grid: string[][];
+  grid: BoxCell[][];
   players: Player[];
   colorMap: Record<string, string>;
   blockSize: number;
@@ -49,20 +54,39 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     const drawBoard = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Dibujar celdas del grid
       for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
-          const colorKey = grid?.[r]?.[c] ?? "WHITE";
-          const color = colorMap[colorKey] || "#e0e0e0";
-          ctx.fillStyle = color;
-          ctx.fillRect(c * blockSize, r * blockSize, blockSize, blockSize);
+          const cell = grid?.[r]?.[c];
+          if (!cell) continue;
 
-          ctx.strokeStyle = "#ccc";
-          ctx.strokeRect(c * blockSize, r * blockSize, blockSize, blockSize);
+          let fillColor = "#e0e0e0";
+
+          switch (cell.type.toUpperCase()) {
+            case "BOX":
+              fillColor = "transparent";
+              break;
+
+            case "PLATFORM":
+              fillColor =
+                cell.color === "WHITE"
+                  ? colorMap["WHITE"]
+                  : colorMap[cell.color] || colorMap["WHITE"];
+              break;
+
+            case "PLAYER":
+              fillColor = "transparent";
+              break;
+
+            default:
+              fillColor = "transparent";
+          }
+
+          ctx.fillStyle = fillColor;
+          ctx.fillRect(c * blockSize, r * blockSize, blockSize, blockSize);
         }
       }
 
-      // Dibujar jugadores
+      // Dibujar jugadores (encima de las celdas)
       players.forEach((player) => {
         const img = avatars[player.color as keyof typeof avatars];
         if (img && img.complete) {
@@ -74,7 +98,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
             blockSize
           );
         } else {
-          // fallback por si no ha cargado la imagen
+          // fallback
           ctx.fillStyle = colorMap[player.color] || "black";
           ctx.beginPath();
           ctx.arc(
