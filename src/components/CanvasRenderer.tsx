@@ -17,7 +17,10 @@ interface CanvasRendererProps {
   blockSize: number;
   cols: number;
   rows: number;
+  movingPlayersRef: React.MutableRefObject<Record<string, { fromRow: number; fromCol: number; toRow: number; toCol: number; startTime: number }>>;
 }
+
+const ANIMATION_DURATION = 150;
 
 const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   grid,
@@ -26,10 +29,10 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   blockSize,
   cols,
   rows,
+  movingPlayersRef,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // precargar avatares
   const avatars = useMemo(() => ({
     YELLOW: new Image(),
     RED: new Image(),
@@ -51,7 +54,9 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const drawBoard = () => {
+    let animationFrameId: number;
+
+    const drawBoard = (timestamp?: number) => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       for (let r = 0; r < rows; r++) {
@@ -60,23 +65,19 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
           if (!cell) continue;
 
           let fillColor = "#e0e0e0";
-
           switch (cell.type.toUpperCase()) {
             case "BOX":
               fillColor = "transparent";
               break;
-
             case "PLATFORM":
               fillColor =
                 cell.color === "WHITE"
                   ? colorMap["WHITE"]
                   : colorMap[cell.color] || colorMap["WHITE"];
               break;
-
             case "PLAYER":
               fillColor = "transparent";
               break;
-
             default:
               fillColor = "transparent";
           }
@@ -87,32 +88,37 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
       }
 
       players.forEach((player) => {
+        const moving = movingPlayersRef.current[player.id];
+        let drawRow = player.row;
+        let drawCol = player.col;
+
+        if (moving && timestamp) {
+          const elapsed = timestamp - moving.startTime;
+          const t = Math.min(elapsed / ANIMATION_DURATION, 1);
+          drawRow = moving.fromRow + (moving.toRow - moving.fromRow) * t;
+          drawCol = moving.fromCol + (moving.toCol - moving.fromCol) * t;
+          if (t === 1) {
+            delete movingPlayersRef.current[player.id];
+          }
+        }
+
         const img = avatars[player.color as keyof typeof avatars];
         if (img && img.complete) {
-          ctx.drawImage(
-            img,
-            player.col * blockSize,
-            player.row * blockSize,
-            blockSize,
-            blockSize
-          );
+          ctx.drawImage(img, drawCol * blockSize, drawRow * blockSize, blockSize, blockSize);
         } else {
           ctx.fillStyle = colorMap[player.color] || "black";
           ctx.beginPath();
-          ctx.arc(
-            player.col * blockSize + blockSize / 2,
-            player.row * blockSize + blockSize / 2,
-            blockSize / 3,
-            0,
-            2 * Math.PI
-          );
+          ctx.arc(drawCol * blockSize + blockSize / 2, drawRow * blockSize + blockSize / 2, blockSize / 3, 0, 2 * Math.PI);
           ctx.fill();
         }
       });
+
+      animationFrameId = requestAnimationFrame(drawBoard);
     };
 
-    drawBoard();
-  }, [grid, players, blockSize, rows, cols, colorMap, avatars]);
+    animationFrameId = requestAnimationFrame(drawBoard);
+    return () => cancelAnimationFrame(animationFrameId);
+  }, [grid, players, blockSize, rows, cols, colorMap, avatars, movingPlayersRef]);
 
   return (
     <canvas

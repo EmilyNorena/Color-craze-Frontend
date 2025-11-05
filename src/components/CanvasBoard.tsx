@@ -1,7 +1,9 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import CanvasRenderer from "./CanvasRenderer";
 import type { Player } from "../types/player";
-import type { MoveResult, PlatformUpdate, PlayerUpdate } from "../types/moveResult";
+//import type { MoveResult, PlatformUpdate, PlayerUpdate } from "../types/moveResult"; HACE FLATA USAR PLAYER UPDATE PARA la actualizacion de puntos
+
+import type { MoveResult, PlatformUpdate } from "../types/moveResult";
 
 interface CanvasBoardProps {
   initialGrid?: any[][];
@@ -13,7 +15,7 @@ interface CanvasBoardProps {
     stats: { totalPaintable: number; paintedCount: number; remaining: number },
     clearGrid: () => void
   ) => void;
-  moveResult?: MoveResult; // actualización en vivo
+  moveResult?: MoveResult;
 }
 
 const CanvasBoard: React.FC<CanvasBoardProps> = ({
@@ -34,19 +36,20 @@ const CanvasBoard: React.FC<CanvasBoardProps> = ({
 
   const [players, setPlayers] = useState<Player[]>(initialPlayers);
 
+  const movingPlayersRef = useRef<Record<string, { fromRow: number; fromCol: number; toRow: number; toCol: number; startTime: number }>>({});
+
   const colorMap = useMemo(
     () => ({
       PLATFORM: "#555555",
       WHITE: "#e0e0e0",
       RED: "#ff4d4d",
-      BLUE: "#4d94ff",
+      PURPLE: "#6a1899ff",
       GREEN: "#4dff4d",
       YELLOW: "#ffd24d",
     }),
     []
   );
 
-  // Stats
   useEffect(() => {
     if (onStatsChange) {
       const total = rows * cols;
@@ -80,6 +83,13 @@ const CanvasBoard: React.FC<CanvasBoardProps> = ({
       prevPlayers.map((p) => {
         if (p.id === moveResult.playerId) {
           const affected = moveResult.affectedPlayers.find((ap) => ap.playerId === p.id);
+          movingPlayersRef.current[p.id] = {
+            fromRow: p.row,
+            fromCol: p.col,
+            toRow: moveResult.newRow,
+            toCol: moveResult.newCol,
+            startTime: performance.now(),
+          };
           return {
             ...p,
             row: moveResult.newRow,
@@ -90,7 +100,6 @@ const CanvasBoard: React.FC<CanvasBoardProps> = ({
         return p;
       })
     );
-
   }, [moveResult]);
 
   return (
@@ -101,6 +110,7 @@ const CanvasBoard: React.FC<CanvasBoardProps> = ({
       blockSize={blockSize}
       rows={rows}
       cols={cols}
+      movingPlayersRef={movingPlayersRef}
     />
   );
 };

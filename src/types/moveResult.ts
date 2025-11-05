@@ -1,4 +1,4 @@
-export type ColorStatus = "WHITE" | "RED" | "BLUE" | "GREEN" | "YELLOW" | "PLATFORM";
+export type ColorStatus = "WHITE" | "RED" | "PURPLE" | "GREEN" | "YELLOW" | "PLATFORM";
 
 export interface PlatformUpdate {
   row: number;

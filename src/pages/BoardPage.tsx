@@ -8,20 +8,14 @@ import type { MoveResult } from "../types/moveResult";
 
 export const BoardPage = () => {
   const { gameId } = useParams<{ gameId: string }>();
-  console.log("📡 Llamando al backend con gameId:", gameId);
 
-  const [playerId] = useState<string | null>(
-    sessionStorage.getItem("correlationId")
-  );
+  const [playerId] = useState<string | null>(sessionStorage.getItem("correlationId"));
   const [boardData, setBoardData] = useState<any | null>(null);
   const [stats, setStats] = useState<{ totalPaintable: number; paintedCount: number; remaining: number } | null>(null);
   const [clearGridFn, setClearGridFn] = useState<(() => void) | null>(null);
   const [loading, setLoading] = useState(true);
-
-  // Estado para el último MoveResult
   const [lastMoveResult, setLastMoveResult] = useState<MoveResult | null>(null);
 
-  // Obtener estado inicial del tablero
   useEffect(() => {
     const fetchBoard = async () => {
       if (!gameId) return;
@@ -47,43 +41,30 @@ export const BoardPage = () => {
     []
   );
 
-  // Conectarse al WebSocket
   const { connected, sendMove, moveResults } = useWebSocketGame(gameId!, playerId!);
 
-  // Actualizar el último MoveResult cuando llegue uno nuevo
   useEffect(() => {
     if (moveResults.length > 0) {
       setLastMoveResult(moveResults[moveResults.length - 1]);
     }
   }, [moveResults]);
 
-  // Manejar input del teclado
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!connected) return;
-
       let direction: string | null = null;
       switch (e.key) {
         case "w":
-        case "ArrowUp":
-          direction = "UP";
-          break;
+        case "ArrowUp": direction = "UP"; break;
         case "s":
-        case "ArrowDown":
-          direction = "DOWN";
-          break;
+        case "ArrowDown": direction = "DOWN"; break;
         case "a":
-        case "ArrowLeft":
-          direction = "LEFT";
-          break;
+        case "ArrowLeft": direction = "LEFT"; break;
         case "d":
-        case "ArrowRight":
-          direction = "RIGHT";
-          break;
+        case "ArrowRight": direction = "RIGHT"; break;
       }
       if (direction) sendMove(direction);
     };
-
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [connected, sendMove]);
@@ -97,7 +78,6 @@ export const BoardPage = () => {
   return (
     <div className="relative flex flex-col items-center justify-center min-h-screen text-white overflow-hidden p-8">
       {stats && <div className="mb-6 w-full max-w-3xl"><StatsPanel stats={stats} onClear={clearGridFn || (() => {})} /></div>}
-
       <div className="relative bg-gray-800 border-4 border-sky-500 rounded-3xl shadow-[0_10px_30px_rgba(0,0,0,0.4)] p-6 flex items-center justify-center">
         <CanvasBoard
           rows={15}
@@ -106,7 +86,7 @@ export const BoardPage = () => {
           onStatsChange={handleStatsChange}
           initialGrid={grid}
           initialPlayers={Object.values(players)}
-          moveResult={lastMoveResult ?? undefined}// <-- PASAMOS EL ÚLTIMO MOVE RESULT
+          moveResult={lastMoveResult ?? undefined}
         />
       </div>
     </div>
