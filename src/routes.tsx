@@ -3,8 +3,8 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { Login } from "./pages/LoginPage";
 import { RoomPage } from "./pages/RoomPage"
 import { WaitingRoomPage } from "./pages/WaitingRoomPage"
-import { BoardPage } from "./pages/BoardPage";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import BoardPage from "./pages/BoardPage";
 
 export const AppRoutes = () => {
   return (
@@ -34,7 +34,7 @@ export const AppRoutes = () => {
         }
       />
       <Route
-        path="/board/:roomId"
+        path="/board/:gameId"
         element={
           <ProtectedRoute>
             <BoardPage />

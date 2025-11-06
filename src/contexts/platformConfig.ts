@@ -1,5 +1,5 @@
 // platformConfig.ts
-import type { Position } from "../types/Position";
+import type { Position } from "../types/board/Position";
 export const generatePlatforms = (rows: number, cols: number): Position[] => {
   const platforms: Position[] = [
     { row: 9, col: 1 }, { row: 9, col: 29 }, { row: 10, col: 15 }, 

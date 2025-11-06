@@ -1,59 +1,92 @@
-import { useEffect, useRef, useCallback } from "react";
-import { Client, type IMessage } from "@stomp/stompjs";
+import { useEffect, useRef, useState, useCallback } from "react";
 import SockJS from "sockjs-client";
+import { Client, type IMessage, StompHeaders } from "@stomp/stompjs";
+import type { MoveResult } from "../types/board/moveResult";
+import type { PlayerMoveMessage } from "../api/websocket/types/playerMoveMessage";
 
-export const useWebSocketGame = <T = unknown>(
-  gameId: string,
-  onMessage: (msg: T) => void
-) => {
+
+export function useWebSocketGame(gameId: string, playerId: string) {
+  const [connected, setConnected] = useState(false);
+  const [moveResults, setMoveResults] = useState<MoveResult[]>([]);
   const clientRef = useRef<Client | null>(null);
 
-  // Usar useCallback para estabilizar la función onMessage
-  const stableOnMessage = useCallback(onMessage, [onMessage]);
-
   useEffect(() => {
-    console.log(`🔄 useWebSocketGame useEffect ejecutado para gameId: ${gameId}`);
+    console.log("🎮 Conectando WebSocket del juego...");
+    const socket = new SockJS("http://localhost:8080/ws");
 
-    const socket = new SockJS("https://color-craze-backend-drggg9g2bsfqhkab.canadacentral-01.azurewebsites.net/ws");
     const client = new Client({
       webSocketFactory: () => socket,
       reconnectDelay: 5000,
+      debug: (str) => console.log("[STOMP GAME]", str),
     });
 
     client.onConnect = () => {
-      console.log("✅ Conectado a WebSocket - GameId:", gameId);
+      console.log("✅ Conectado al WebSocket del juego:", gameId);
+      setConnected(true);
 
-      const handleMessage = (message: IMessage) => {
+      client.subscribe(`/topic/board.${gameId}`, (message: IMessage) => {
         try {
-          const parsed = JSON.parse(message.body) as T;
-          stableOnMessage(parsed);
+          const result: MoveResult = JSON.parse(message.body);
+          setMoveResults((prev) => [...prev, result]);
         } catch (err) {
-          console.error("❌ Error parsing WebSocket message:", err);
+          console.error("Error parseando mensaje de movimiento:", err);
         }
-      };
+      });
 
-      client.subscribe(`/topic/board.${gameId}`, handleMessage);
-      client.subscribe(`/user/queue/reply`, handleMessage);
+      client.subscribe(`/user/queue/reply`, (message: IMessage) => {
+        try {
+          const result: MoveResult = JSON.parse(message.body);
+          console.warn("[WS] Respuesta privada:", result);
+        } catch (err) {
+          console.error("Error parseando respuesta privada:", err);
+        }
+      });
+    };
+
+    client.onDisconnect = () => {
+      console.log("❌ Desconectado del WebSocket del juego:", gameId);
+      setConnected(false);
     };
 
     client.activate();
     clientRef.current = client;
 
     return () => {
-      console.log("🧹 Limpiando WebSocket connection");
+      console.log("🔌 Cerrando conexión del juego...");
       client.deactivate();
       clientRef.current = null;
     };
-  }, [gameId, stableOnMessage]); // ✅ Agregar stableOnMessage a las dependencias
+  }, [gameId]);
 
-  const sendMove = (playerId: string, direction: string) => {
-    if (clientRef.current?.connected) {
-      clientRef.current.publish({
-        destination: `/app/move`,
-        body: JSON.stringify({ playerId, direction }),
-      });
-    }
+  const sendMove = useCallback(
+    (direction: string) => {
+      const client = clientRef.current;
+      if (client && client.connected) {
+        const moveMessage: PlayerMoveMessage = {
+          playerId,
+          direction,
+          room: gameId,
+        };
+
+        const headers: StompHeaders = {};
+        console.log("📤 Enviando movimiento:", moveMessage);
+
+        client.publish({
+          destination: `/app/move.${gameId}`,
+          body: JSON.stringify(moveMessage),
+          headers,
+        });
+      } else {
+        console.warn("⚠️ WebSocket no conectado, no se puede enviar movimiento.");
+      }
+    },
+    [gameId, playerId]
+  );
+
+
+  return {
+    connected,
+    moveResults,
+    sendMove,
   };
-
-  return { sendMove };
-};
+}

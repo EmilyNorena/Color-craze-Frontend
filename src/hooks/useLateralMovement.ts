@@ -1,6 +1,6 @@
 // src/hooks/useLateralMovement.ts
 import { useState, useEffect, useRef } from "react";
-import type { move } from "../types/move";
+import type { move } from "../types/board/move";
 
 interface MovementState {
   position: { x: number; y: number };
