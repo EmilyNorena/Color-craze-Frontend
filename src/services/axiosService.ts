@@ -2,7 +2,7 @@ import axios from "axios";
 
 // Client build
 const apiClient = axios.create({
-  baseURL: "http://localhost:8080",
+  baseURL: "https://color-craze-backend-drggg9g2bsfqhkab.canadacentral-01.azurewebsites.net",
   headers: {
     "Content-Type": "application/json",
   },

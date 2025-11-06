@@ -6,7 +6,7 @@ export async function login(
   email: string,
   password: string
 ): Promise<LoginResponse> {
-  const API_AUTH_URL = "http://localhost:8080/api/auth";
+  const API_AUTH_URL = "https://color-craze-backend-drggg9g2bsfqhkab.canadacentral-01.azurewebsites.net/api/auth";
   const url = `${API_AUTH_URL}/login`;
 
   const response = await apiClient.post<LoginResponse>(url, {
@@ -18,7 +18,7 @@ export async function login(
 }
 
 export async function refreshToken(refreshToken: string): Promise<LoginResponse> {
-  const API_AUTH_URL = "http://localhost:8080/api/auth";
+  const API_AUTH_URL = "https://color-craze-backend-drggg9g2bsfqhkab.canadacentral-01.azurewebsites.net/api/auth";
   const url = `${API_AUTH_URL}/refresh`;
 
   const response = await apiClient.post<LoginResponse>(url, {
@@ -29,7 +29,7 @@ export async function refreshToken(refreshToken: string): Promise<LoginResponse>
 }
 
 export async function guestLogin(): Promise<LoginResponse> {
-  const API_AUTH_URL = "http://localhost:8080/api/auth";
+  const API_AUTH_URL = "https://color-craze-backend-drggg9g2bsfqhkab.canadacentral-01.azurewebsites.net/api/auth";
   const url = `${API_AUTH_URL}/guest`;
 
   const response = await apiClient.post<LoginResponse>(url);
