@@ -1,13 +1,9 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import SockJS from "sockjs-client";
 import { Client, type IMessage, StompHeaders } from "@stomp/stompjs";
-import type { MoveResult } from "../types/moveResult";
+import type { MoveResult } from "../types/board/moveResult";
+import type { PlayerMoveMessage } from "../api/websocket/types/playerMoveMessage";
 
-interface PlayerMoveMessage {
-  playerId: string;
-  direction: string; // "UP", "DOWN", "LEFT", "RIGHT"
-  room: string;
-}
 
 export function useWebSocketGame(gameId: string, playerId: string) {
   const [connected, setConnected] = useState(false);
@@ -28,7 +24,6 @@ export function useWebSocketGame(gameId: string, playerId: string) {
       console.log("✅ Conectado al WebSocket del juego:", gameId);
       setConnected(true);
 
-      // Suscripción al tablero del juego
       client.subscribe(`/topic/board.${gameId}`, (message: IMessage) => {
         try {
           const result: MoveResult = JSON.parse(message.body);
@@ -38,7 +33,6 @@ export function useWebSocketGame(gameId: string, playerId: string) {
         }
       });
 
-      // Suscripción a mensajes privados del usuario
       client.subscribe(`/user/queue/reply`, (message: IMessage) => {
         try {
           const result: MoveResult = JSON.parse(message.body);
@@ -86,8 +80,9 @@ export function useWebSocketGame(gameId: string, playerId: string) {
         console.warn("⚠️ WebSocket no conectado, no se puede enviar movimiento.");
       }
     },
-    [connected, gameId, playerId]
+    [gameId, playerId]
   );
+
 
   return {
     connected,

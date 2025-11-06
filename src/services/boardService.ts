@@ -1,13 +1,5 @@
-export interface BoardData {
-  grid: string[][];
-  players: Record<string, any>;
-}
+import type { BoardData } from "../types/board/boardData";
 
-/**
- * Obtiene el estado actual del tablero desde el backend.
- * @param gameId ID de la partida
- * @returns Datos del tablero (grid, jugadores, etc.)
- */
 export const getBoardState = async (gameId: string): Promise<BoardData> => {
   const response = await fetch(`http://localhost:8080/api/games/${gameId}`);
 

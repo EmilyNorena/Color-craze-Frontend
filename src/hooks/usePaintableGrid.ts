@@ -1,6 +1,6 @@
 // usePaintableGrid.ts
 import { useState, useCallback } from 'react';
-import type { Position } from "../types/Position";
+import type { Position } from "../types/board/Position";
 
 export const usePaintableGrid = (platforms: Position[], playerColors: string[]) => {
   const [paintedCells, setPaintedCells] = useState<Record<string, string>>({});

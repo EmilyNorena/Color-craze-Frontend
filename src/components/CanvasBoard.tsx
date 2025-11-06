@@ -1,12 +1,12 @@
 import React, { useEffect, useMemo, useState, useRef } from "react";
 import CanvasRenderer from "./CanvasRenderer";
-import type { Player } from "../types/player";
-//import type { MoveResult, PlatformUpdate, PlayerUpdate } from "../types/moveResult"; HACE FLATA USAR PLAYER UPDATE PARA la actualizacion de puntos
+import type { Player } from "../types/board/player";
+import type { MoveResult } from "../types/board/moveResult";
+import type { PlatformUpdate } from "../types/board/platformUpdate";
+import type { Cell } from "../types/board/cell";
 
-import type { MoveResult, PlatformUpdate } from "../types/moveResult";
-
-interface CanvasBoardProps {
-  initialGrid?: any[][];
+export interface CanvasBoardProps {
+  initialGrid?: Cell[][];
   initialPlayers?: Player[];
   rows?: number;
   cols?: number;
@@ -27,7 +27,7 @@ const CanvasBoard: React.FC<CanvasBoardProps> = ({
   onStatsChange,
   moveResult,
 }) => {
-  const [grid, setGrid] = useState(() => {
+  const [grid, setGrid] = useState<Cell[][]>(() => {
     if (initialGrid.length > 0) return initialGrid;
     return Array.from({ length: rows }, () =>
       Array.from({ length: cols }, () => ({ type: "BOX", color: "WHITE" }))
@@ -36,7 +36,12 @@ const CanvasBoard: React.FC<CanvasBoardProps> = ({
 
   const [players, setPlayers] = useState<Player[]>(initialPlayers);
 
-  const movingPlayersRef = useRef<Record<string, { fromRow: number; fromCol: number; toRow: number; toCol: number; startTime: number }>>({});
+  const movingPlayersRef = useRef<
+    Record<
+      string,
+      { fromRow: number; fromCol: number; toRow: number; toCol: number; startTime: number }
+    >
+  >({});
 
   const colorMap = useMemo(
     () => ({
@@ -53,13 +58,15 @@ const CanvasBoard: React.FC<CanvasBoardProps> = ({
   useEffect(() => {
     if (onStatsChange) {
       const total = rows * cols;
-      const painted = grid.flat().filter((c: any) => c.color !== "WHITE").length;
+      const painted = grid.flat().filter((c) => c.color !== "WHITE").length;
       const remaining = total - painted;
 
       const clearGrid = () => {
-        setGrid(Array.from({ length: rows }, () =>
-          Array.from({ length: cols }, () => ({ type: "BOX", color: "WHITE" }))
-        ));
+        setGrid(
+          Array.from({ length: rows }, () =>
+            Array.from({ length: cols }, () => ({ type: "BOX", color: "WHITE" }))
+          )
+        );
       };
 
       onStatsChange({ totalPaintable: total, paintedCount: painted, remaining }, clearGrid);

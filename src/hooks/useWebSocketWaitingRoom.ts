@@ -1,11 +1,7 @@
 import { useEffect, useRef } from "react";
 import SockJS from "sockjs-client";
 import { Client, type IMessage, StompHeaders } from "@stomp/stompjs";
-
-export interface SelectColorMessage {
-  playerId: string;
-  color: string;
-}
+import type { SelectColorMessage } from "../types/board/selectColorMessage";
 
 export const useWebSocketWaitingRoom = <T = unknown, E = unknown>(
   roomId: string,
@@ -27,7 +23,6 @@ export const useWebSocketWaitingRoom = <T = unknown, E = unknown>(
     client.onConnect = () => {
       console.log("✅ Conectado al WebSocket de WaitingRoom");
 
-      // Suscripción al estado general de la sala
       client.subscribe(`/topic/waiting-room/${roomId}`, (message: IMessage) => {
         try {
           const parsed = JSON.parse(message.body) as T;
@@ -37,7 +32,6 @@ export const useWebSocketWaitingRoom = <T = unknown, E = unknown>(
         }
       });
 
-      // Suscripción a errores específicos del usuario
       client.subscribe(`/user/queue/waiting-room/color-error`, (message: IMessage) => {
         try {
           const parsed = JSON.parse(message.body) as E;
@@ -48,6 +42,10 @@ export const useWebSocketWaitingRoom = <T = unknown, E = unknown>(
       });
     };
 
+    client.onDisconnect = () => {
+      console.log("❌ Desconectado del WebSocket de WaitingRoom");
+    };
+
     client.activate();
     clientRef.current = client;
 
@@ -56,9 +54,8 @@ export const useWebSocketWaitingRoom = <T = unknown, E = unknown>(
       client.deactivate();
       clientRef.current = null;
     };
-  }, [roomId]);
+  }, [roomId, onRoomUpdate, onColorError]);
 
-  /** Envía selección de color al backend */
   const selectColor = (message: SelectColorMessage) => {
     const client = clientRef.current;
     if (client && client.connected) {

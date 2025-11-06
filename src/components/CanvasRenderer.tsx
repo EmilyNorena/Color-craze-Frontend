@@ -3,7 +3,7 @@ import avatarYellow from "../assets/avatar1.png";
 import avatarRed from "../assets/avatar2.png";
 import avatarPurple from "../assets/avatar3.png";
 import avatarGreen from "../assets/avatar4.png";
-import type { Player } from "../types/player";
+import type { Player } from "../types/board/player";
 
 interface BoxCell {
   type: "BOX" | "PLATFORM" | "PLAYER";
