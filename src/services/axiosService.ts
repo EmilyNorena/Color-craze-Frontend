@@ -2,7 +2,7 @@ import axios from "axios";
 
 // Client build
 const apiClient = axios.create({
-  baseURL: "https://insensibly-bathyal-frances.ngrok-free.dev",
+  baseURL: "https://color-craze-backend-drggg9g2bsfqhkab.canadacentral-01.azurewebsites.net",
   headers: {
     "Content-Type": "application/json",
   },
