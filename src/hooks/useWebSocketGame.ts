@@ -12,7 +12,7 @@ export function useWebSocketGame(gameId: string, playerId: string) {
 
   useEffect(() => {
     console.log("🎮 Conectando WebSocket del juego...");
-    const socket = new SockJS("https://color-craze-backend-drggg9g2bsfqhkab.canadacentral-01.azurewebsites.net/ws");
+    const socket = new SockJS("https://insensibly-bathyal-frances.ngrok-free.dev/ws");
 
     const client = new Client({
       webSocketFactory: () => socket,
