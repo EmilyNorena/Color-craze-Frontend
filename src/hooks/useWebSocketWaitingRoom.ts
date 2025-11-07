@@ -12,7 +12,7 @@ export const useWebSocketWaitingRoom = <T = unknown, E = unknown>(
 
   useEffect(() => {
     console.log("🔌 Conectando WebSocket WaitingRoom...");
-    const socket = new SockJS("https://insensibly-bathyal-frances.ngrok-free.dev/ws");
+    const socket = new SockJS("https://color-craze-backend-drggg9g2bsfqhkab.canadacentral-01.azurewebsites.net/ws");
 
     const client = new Client({
       webSocketFactory: () => socket,
