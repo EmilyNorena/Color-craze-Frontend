@@ -1,7 +1,7 @@
 import type { BoardData } from "../types/board/boardData";
 
 export const getBoardState = async (gameId: string): Promise<BoardData> => {
-  const response = await fetch(`https://insensibly-bathyal-frances.ngrok-free.dev/api/games/${gameId}`);
+  const response = await fetch(`https://color-craze-backend-drggg9g2bsfqhkab.canadacentral-01.azurewebsites.net/api/games/${gameId}`);
 
   if (!response.ok) {
     throw new Error(`Error ${response.status}: no se pudo obtener el board`);
